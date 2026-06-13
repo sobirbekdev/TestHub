@@ -1,0 +1,23 @@
+name: Keep Render backend awake
+
+# Render bepul tarifi 15 daqiqa harakatsizlikdan keyin serverni uxlatadi.
+# Bu workflow har 10 daqiqada /health ga ping yuborib serverni "uyg'oq" tutadi.
+on:
+  schedule:
+    - cron: '*/10 * * * *' # har 10 daqiqada
+  workflow_dispatch: {} # qo'lda ishga tushirish uchun
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping health endpoint
+        run: |
+          for i in 1 2 3; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 https://testhub-backend-rhu0.onrender.com/health)
+            echo "Attempt $i → HTTP $code"
+            [ "$code" = "200" ] && exit 0
+            sleep 20
+          done
+          echo "Health check failed after retries"
+          exit 1
