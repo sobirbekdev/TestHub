@@ -226,6 +226,7 @@ export class AuthService {
         name: true,
         role: true,
         groupId: true,
+        group: { select: { id: true, name: true } },
         createdAt: true,
       },
     });

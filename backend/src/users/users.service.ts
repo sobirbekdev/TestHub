@@ -27,6 +27,29 @@ export class UsersService {
   }
 
   async updateName(id: number, name: string) {
-    return this.prisma.user.update({ where: { id }, data: { name } });
+    return this.prisma.user.update({
+      where: { id },
+      data: { name },
+      select: { id: true, phone: true, name: true, role: true, groupId: true },
+    });
+  }
+
+  async updateGroup(id: number, groupId: number | null) {
+    if (groupId !== null) {
+      const group = await this.prisma.group.findUnique({ where: { id: groupId } });
+      if (!group) throw new NotFoundException('Guruh topilmadi');
+    }
+    return this.prisma.user.update({
+      where: { id },
+      data: { groupId },
+      select: {
+        id: true,
+        phone: true,
+        name: true,
+        role: true,
+        groupId: true,
+        group: { select: { id: true, name: true } },
+      },
+    });
   }
 }

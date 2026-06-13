@@ -11,6 +11,7 @@ export interface User {
   name: string | null;
   role: Role;
   groupId: number | null;
+  group?: { id: number; name: string } | null;
   createdAt: string;
 }
 
@@ -87,6 +88,8 @@ export interface LeaderboardEntry {
   phone: string;
   avgScore: number;
   attempts: number;
+  groupName?: string | null;
+  totalTimeSec?: number;
 }
 
 export interface Group {

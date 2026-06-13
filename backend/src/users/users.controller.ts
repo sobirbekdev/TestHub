@@ -32,4 +32,10 @@ export class UsersController {
   updateName(@CurrentUser() user: any, @Body() body: { name: string }) {
     return this.usersService.updateName(user.id, body.name);
   }
+
+  // Foydalanuvchi o'z guruhini tanlaydi/almashtiradi
+  @Patch('me/group')
+  updateMyGroup(@CurrentUser() user: any, @Body() body: { groupId: number | null }) {
+    return this.usersService.updateGroup(user.id, body.groupId ?? null);
+  }
 }

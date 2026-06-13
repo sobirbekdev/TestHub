@@ -59,7 +59,9 @@ export default function RatingPage() {
                   <p style={{ color: theme.text, fontWeight: isMe ? 700 : 500, fontSize: 14 }}>
                     {entry.name || entry.phone.slice(-4)} {isMe && '(Siz)'}
                   </p>
-                  <p style={{ color: theme.text, opacity: 0.4, fontSize: 12 }}>{entry.attempts} test</p>
+                  <p style={{ color: theme.text, opacity: 0.4, fontSize: 12 }}>
+                    {entry.groupName ? `${entry.groupName} • ` : ''}{entry.attempts} test
+                  </p>
                 </div>
                 <span style={{ color: theme.accent, fontWeight: 700, fontSize: 16 }}>{entry.avgScore}%</span>
               </div>

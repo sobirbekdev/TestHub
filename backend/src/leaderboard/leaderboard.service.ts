@@ -1,64 +1,98 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
+
+interface RankRow {
+  userId: number;
+  avgScore: number;
+  attempts: number;
+  totalMs: number;
+}
 
 @Injectable()
 export class LeaderboardService {
   constructor(private prisma: PrismaService) {}
 
-  // ─── Umumiy reyting ───────────────────────────────────────────────────────────
-  async getGlobal(limit = 50) {
-    const results = await this.prisma.attempt.groupBy({
-      by: ['userId'],
-      where: { status: 'COMPLETED' },
-      _avg: { score: true },
-      _count: { id: true },
-      orderBy: { _avg: { score: 'desc' } },
-      take: limit,
-    });
-
-    return this.enrichWithUsers(results);
+  // ─── Umumiy reyting (butun foydalanuvchilar) ───────────────────────────────
+  async getGlobal(limit = 100) {
+    return this.aggregateRanking({ status: 'COMPLETED' }, limit);
   }
 
-  // ─── Guruh reytingi ───────────────────────────────────────────────────────────
+  // ─── Guruh reytingi ───────────────────────────────────────────────────────
   async getByGroup(groupId: number) {
     const users = await this.prisma.user.findMany({
       where: { groupId },
       select: { id: true },
     });
     const userIds = users.map((u) => u.id);
-
-    const results = await this.prisma.attempt.groupBy({
-      by: ['userId'],
-      where: { status: 'COMPLETED', userId: { in: userIds } },
-      _avg: { score: true },
-      _count: { id: true },
-      orderBy: { _avg: { score: 'desc' } },
+    return this.aggregateRanking({
+      status: 'COMPLETED',
+      userId: { in: userIds },
     });
-
-    return this.enrichWithUsers(results);
   }
 
-  // ─── Kunlik reyting ───────────────────────────────────────────────────────────
+  // ─── Kunlik reyting ─────────────────────────────────────────────────────────
   async getDaily() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
-    const results = await this.prisma.attempt.groupBy({
-      by: ['userId'],
-      where: {
-        status: 'COMPLETED',
-        finishedAt: { gte: today },
-      },
-      _avg: { score: true },
-      _count: { id: true },
-      orderBy: { _avg: { score: 'desc' } },
-      take: 50,
-    });
-
-    return this.enrichWithUsers(results);
+    return this.aggregateRanking(
+      { status: 'COMPLETED', finishedAt: { gte: today } },
+      50,
+    );
   }
 
-  // ─── Foydalanuvchi statistikasi ───────────────────────────────────────────────
+  // ─── Yagona test bo'yicha guruh leaderboardi ────────────────────────────────
+  // (test natijasidan keyin "guruhda kim eng ko'p ishladi" uchun)
+  async getTestLeaderboard(testId: number, groupId?: number) {
+    const attempts = await this.prisma.attempt.findMany({
+      where: {
+        testId,
+        status: 'COMPLETED',
+        ...(groupId ? { user: { groupId } } : {}),
+      },
+      select: {
+        userId: true,
+        score: true,
+        totalScore: true,
+        startedAt: true,
+        finishedAt: true,
+        user: { select: { name: true, phone: true, group: { select: { name: true } } } },
+      },
+    });
+
+    // Har bir user uchun eng yaxshi urinish (yuqori ball, kam vaqt)
+    const best = new Map<number, (typeof attempts)[0] & { ms: number }>();
+    for (const a of attempts) {
+      const ms = a.finishedAt
+        ? new Date(a.finishedAt).getTime() - new Date(a.startedAt).getTime()
+        : Number.MAX_SAFE_INTEGER;
+      const prev = best.get(a.userId);
+      if (
+        !prev ||
+        (a.score || 0) > (prev.score || 0) ||
+        ((a.score || 0) === (prev.score || 0) && ms < prev.ms)
+      ) {
+        best.set(a.userId, { ...a, ms });
+      }
+    }
+
+    const rows = [...best.values()].sort(
+      (a, b) => (b.score || 0) - (a.score || 0) || a.ms - b.ms,
+    );
+
+    return rows.map((r, idx) => ({
+      rank: idx + 1,
+      userId: r.userId,
+      name: r.user.name || 'Nomsiz',
+      phone: r.user.phone,
+      groupName: r.user.group?.name || null,
+      score: Math.round((r.score || 0) * 10) / 10,
+      totalScore: r.totalScore != null ? Math.round(r.totalScore * 10) / 10 : null,
+      timeSec: r.ms === Number.MAX_SAFE_INTEGER ? null : Math.round(r.ms / 1000),
+    }));
+  }
+
+  // ─── Foydalanuvchi statistikasi ─────────────────────────────────────────────
   async getUserStats(userId: number) {
     const attempts = await this.prisma.attempt.findMany({
       where: { userId, status: 'COMPLETED' },
@@ -66,7 +100,6 @@ export class LeaderboardService {
       orderBy: { finishedAt: 'desc' },
     });
 
-    // Haftalik ma'lumot (oxirgi 7 kun)
     const weekly = Array.from({ length: 7 }, (_, i) => {
       const date = new Date();
       date.setDate(date.getDate() - i);
@@ -92,7 +125,6 @@ export class LeaderboardService {
       };
     }).reverse();
 
-    // Test turi bo'yicha
     const byType: Record<string, { count: number; avgScore: number }> = {};
     for (const a of attempts) {
       const t = a.test.type;
@@ -111,31 +143,60 @@ export class LeaderboardService {
           )
         : 0;
 
-    return {
-      totalAttempts: attempts.length,
-      avgScore,
-      weekly,
-      byType,
-    };
+    return { totalAttempts: attempts.length, avgScore, weekly, byType };
   }
 
-  private async enrichWithUsers(
-    results: { userId: number; _avg: { score: number | null }; _count: { id: number } }[],
+  // ─── Umumiy agregator (o'rtacha ball desc, teng bo'lsa kam vaqt yuqori) ──────
+  private async aggregateRanking(
+    where: Prisma.AttemptWhereInput,
+    limit?: number,
   ) {
-    const userIds = results.map((r) => r.userId);
+    const attempts = await this.prisma.attempt.findMany({
+      where,
+      select: { userId: true, score: true, startedAt: true, finishedAt: true },
+    });
+
+    const map = new Map<number, { sumScore: number; count: number; sumMs: number }>();
+    for (const a of attempts) {
+      const e = map.get(a.userId) || { sumScore: 0, count: 0, sumMs: 0 };
+      e.sumScore += a.score || 0;
+      e.count++;
+      if (a.finishedAt) {
+        e.sumMs += new Date(a.finishedAt).getTime() - new Date(a.startedAt).getTime();
+      }
+      map.set(a.userId, e);
+    }
+
+    const rows: RankRow[] = [...map.entries()].map(([userId, e]) => ({
+      userId,
+      avgScore: e.sumScore / e.count,
+      attempts: e.count,
+      totalMs: e.sumMs,
+    }));
+
+    // O'rtacha ball bo'yicha kamayish, teng bo'lsa kam vaqt sarflagani yuqori
+    rows.sort((a, b) => b.avgScore - a.avgScore || a.totalMs - b.totalMs);
+
+    return this.enrichWithUsers(limit ? rows.slice(0, limit) : rows);
+  }
+
+  private async enrichWithUsers(rows: RankRow[]) {
+    const userIds = rows.map((r) => r.userId);
     const users = await this.prisma.user.findMany({
       where: { id: { in: userIds } },
-      select: { id: true, name: true, phone: true },
+      select: { id: true, name: true, phone: true, group: { select: { name: true } } },
     });
     const userMap = new Map(users.map((u) => [u.id, u]));
 
-    return results.map((r, idx) => ({
+    return rows.map((r, idx) => ({
       rank: idx + 1,
       userId: r.userId,
       name: userMap.get(r.userId)?.name || 'Nomsiz',
       phone: userMap.get(r.userId)?.phone || '',
-      avgScore: Math.round((r._avg.score || 0) * 10) / 10,
-      attempts: r._count.id,
+      groupName: userMap.get(r.userId)?.group?.name || null,
+      avgScore: Math.round(r.avgScore * 10) / 10,
+      attempts: r.attempts,
+      totalTimeSec: Math.round(r.totalMs / 1000),
     }));
   }
 }

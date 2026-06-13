@@ -69,9 +69,12 @@ export default function LoginPage() {
     if (name.trim().length < 2) return toast.error("Ism familiyangizni kiriting");
     setLoading(true);
     try {
-      await api.patch('/users/me/name', { name: name.trim() });
+      const { data } = await api.patch('/users/me/name', { name: name.trim() });
+      const tok = useAuthStore.getState().token;
+      const cur = useAuthStore.getState().user;
+      if (tok && cur) setAuth({ ...cur, name: data.name }, tok);
       toast.success("Ro'yxatdan o'tdingiz!");
-      router.push('/home');
+      router.push('/profile');
     } catch (e: any) {
       toast.error("Ismni saqlashda xatolik");
     } finally {

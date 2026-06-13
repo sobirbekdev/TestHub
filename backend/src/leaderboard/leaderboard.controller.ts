@@ -1,4 +1,4 @@
-import { Controller, Get, Param, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, Query, UseGuards } from '@nestjs/common';
 import { LeaderboardService } from './leaderboard.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -11,6 +11,18 @@ export class LeaderboardController {
   @Get('global')
   getGlobal() {
     return this.leaderboardService.getGlobal();
+  }
+
+  // Bitta test bo'yicha leaderboard (natija sahifasi uchun)
+  @Get('test/:testId')
+  getTestLeaderboard(
+    @Param('testId', ParseIntPipe) testId: number,
+    @Query('groupId') groupId?: string,
+  ) {
+    return this.leaderboardService.getTestLeaderboard(
+      testId,
+      groupId ? parseInt(groupId) : undefined,
+    );
   }
 
   @Get('group/:groupId')

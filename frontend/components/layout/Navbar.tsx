@@ -96,17 +96,19 @@ export default function Navbar() {
               backgroundColor: theme.input, border: `1px solid ${theme.border}`,
               marginLeft: 4,
             }}>
-              <div style={{
-                width: 28, height: 28, borderRadius: '50%',
-                background: `linear-gradient(135deg, ${theme.accent}, ${theme.accent}88)`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#fff', fontSize: 12, fontWeight: 700, flexShrink: 0,
-              }}>
-                {(user?.name || user?.phone || 'U')[0].toUpperCase()}
-              </div>
-              <span style={{ color: theme.text, fontSize: 13, fontWeight: 500 }}>
-                {user?.name || user?.phone?.slice(-4)}
-              </span>
+              <Link href="/profile" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+                <div style={{
+                  width: 28, height: 28, borderRadius: '50%',
+                  background: `linear-gradient(135deg, ${theme.accent}, ${theme.accent}88)`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#fff', fontSize: 12, fontWeight: 700, flexShrink: 0,
+                }}>
+                  {(user?.name || user?.phone || 'U')[0].toUpperCase()}
+                </div>
+                <span style={{ color: theme.text, fontSize: 13, fontWeight: 500 }}>
+                  {user?.name || user?.phone?.slice(-4)}
+                </span>
+              </Link>
               <button onClick={handleLogout} title="Chiqish"
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.text, opacity: 0.4, fontSize: 14, padding: '2px 4px', marginLeft: 2 }}>
                 ✕
@@ -141,14 +143,15 @@ export default function Navbar() {
           );
         })}
         {/* Mobile: Profil */}
-        <button onClick={handleLogout} style={{
-          background: 'none', border: 'none', cursor: 'pointer',
+        <Link href="/profile" style={{
+          textDecoration: 'none',
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-          color: theme.text, opacity: 0.5, padding: '4px 12px',
+          color: isActive('/profile') ? theme.accent : theme.text,
+          opacity: isActive('/profile') ? 1 : 0.5, padding: '4px 12px',
         }}>
           <span style={{ fontSize: 20 }}>👤</span>
-          <span style={{ fontSize: 10 }}>Chiqish</span>
-        </button>
+          <span style={{ fontSize: 10 }}>Profil</span>
+        </Link>
       </nav>
     </>
   );
