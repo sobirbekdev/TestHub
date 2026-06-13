@@ -305,6 +305,7 @@ export class AttemptsService {
           isCorrect: ans.isCorrect,
           aiStatus: ans.aiStatus,
           aiScore: ans.aiScore,
+          aiComment: ans.aiComment,
           videoFileId: ans.orderNo ? videoMap.get(ans.orderNo) || null : null,
         };
       });
@@ -339,6 +340,7 @@ export class AttemptsService {
           isCorrect: ans.isCorrect,
           aiStatus: ans.aiStatus,
           aiScore: ans.aiScore,
+          aiComment: ans.aiComment,
           correctOptions: ans.question?.options
             .filter((o) => o.isCorrect)
             .map((o) => o.label) || [],
