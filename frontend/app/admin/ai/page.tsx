@@ -56,6 +56,19 @@ export default function AdminAiPage() {
               {ans.imageUrl && (
                 <img src={ans.imageUrl} alt="" style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8, marginBottom: 12 }} />
               )}
+              {(ans.aiComment || ans.aiScore != null) && (
+                <div style={{ backgroundColor: theme.input, borderRadius: 10, padding: 12, marginBottom: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: ans.aiComment ? 6 : 0 }}>
+                    <span style={{ color: theme.text, opacity: 0.6, fontSize: 12, fontWeight: 600 }}>🤖 AI baho</span>
+                    {ans.aiScore != null && (
+                      <span style={{ color: ans.aiScore > 0 ? '#10b981' : '#ef4444', fontWeight: 700, fontSize: 13 }}>{ans.aiScore} ball</span>
+                    )}
+                  </div>
+                  {ans.aiComment && (
+                    <p style={{ color: theme.text, opacity: 0.75, fontSize: 12, lineHeight: 1.5, margin: 0, whiteSpace: 'pre-wrap' }}>{ans.aiComment}</p>
+                  )}
+                </div>
+              )}
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {[0, 25, 50, 75, 100].map((score) => (
                   <button key={score} onClick={() => manualScore(ans.id, score)}

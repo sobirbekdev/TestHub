@@ -290,6 +290,42 @@ export default function ResultPage() {
           </div>
         </div>
 
+        {/* ── AI tekshiruvi natijalari ── */}
+        {answers.some((a) => a.aiStatus) && (
+          <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: 18, padding: 20, marginBottom: 16 }}>
+            <p style={{ color: theme.text, fontWeight: 600, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span>🤖</span> AI tekshiruvi
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {answers.filter((a) => a.aiStatus).map((ans, i) => {
+                const no = ans.orderNo ?? i + 1;
+                const pending = ans.aiStatus === 'PENDING' || ans.aiStatus === 'RECHECK';
+                return (
+                  <div key={`ai-${no}-${i}`} style={{ borderTop: i === 0 ? 'none' : `1px solid ${theme.border}`, paddingTop: i === 0 ? 0 : 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                      <span style={{ color: theme.text, fontWeight: 600 }}>{no}-savol</span>
+                      {pending ? (
+                        <span style={{ color: '#8b5cf6', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span className="animate-pulse">⏳</span> AI tekshirmoqda...
+                        </span>
+                      ) : (
+                        <span style={{ color: (ans.aiScore ?? 0) > 0 ? '#10b981' : '#ef4444', fontWeight: 700, fontSize: 14 }}>
+                          {(ans.aiScore ?? 0).toFixed(1)} ball
+                        </span>
+                      )}
+                    </div>
+                    {!pending && ans.aiComment && (
+                      <p style={{ color: theme.text, opacity: 0.75, fontSize: 13, lineHeight: 1.5, margin: 0, whiteSpace: 'pre-wrap' }}>
+                        {ans.aiComment}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* ── Video panel ── */}
         {activeNo !== null && (
           <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.accent}`, borderRadius: 18, padding: 16, marginBottom: 16 }}

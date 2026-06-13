@@ -60,6 +60,7 @@ export interface Answer {
   isCorrect: boolean | null;
   aiStatus?: AiStatus;
   aiScore?: number;
+  aiComment?: string;
   correctOptions: string[];
   videoFileId?: string;
 }
