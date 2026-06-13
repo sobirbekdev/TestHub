@@ -531,7 +531,7 @@ export default function AttestationPage() {
                     {loading ? (
                       <div style={{ color: theme.text, opacity: 0.4, textAlign: 'center', padding: 40 }}>Yuklanmoqda...</div>
                     ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: `repeat(${Math.ceil(questions.length / 2)}, auto)`, gridAutoFlow: 'column', gap: 8 }}>
                         {questions.map(q => (
                           <div key={q.orderNo} style={{ ...s.card, borderRadius: 12, padding: '12px 16px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
@@ -579,7 +579,7 @@ export default function AttestationPage() {
 
                 {/* Text mode */}
                 {qMode === 'text' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: `repeat(${Math.ceil(questions.length / 2)}, auto)`, gridAutoFlow: 'column', gap: 8 }}>
                     {loading ? (
                       <div style={{ color: theme.text, opacity: 0.4, textAlign: 'center', padding: 40 }}>Yuklanmoqda...</div>
                     ) : questions.map(q => (

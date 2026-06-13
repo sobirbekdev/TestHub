@@ -90,7 +90,8 @@ export class AttemptsService {
     const isImageBased =
       testType === 'DTM_VARIANT' ||
       testType === 'NATIONAL_CERT' ||
-      testType === 'ATTESTATION';
+      testType === 'ATTESTATION' ||
+      testType === 'TOPIC';
 
     if (isImageBased) {
       return this.finishImageBased(attempt, dto);
@@ -320,7 +321,8 @@ export class AttemptsService {
     const isImageBased =
       testType === 'DTM_VARIANT' ||
       testType === 'NATIONAL_CERT' ||
-      testType === 'ATTESTATION';
+      testType === 'ATTESTATION' ||
+      testType === 'TOPIC';
 
     // Video yechimlarni olamiz
     const videoSolutions = await this.prisma.videoSolution.findMany({

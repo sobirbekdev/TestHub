@@ -538,7 +538,7 @@ export default function AdminGroupTestsPage() {
                     {qLoading ? (
                       <div style={{ color: theme.text, opacity: 0.4, textAlign: 'center', padding: 40 }}>Yuklanmoqda...</div>
                     ) : (
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 8 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: `repeat(${Math.ceil(questions.length / 2)}, auto)`, gridAutoFlow: 'column', gap: 8 }}>
                         {questions.map((q) => (
                           <div key={q.orderNo} style={{ ...s.card, borderRadius: 12, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
                             <span style={{ color: theme.accent, fontWeight: 700, fontSize: 15, minWidth: 26 }}>{q.orderNo}</span>

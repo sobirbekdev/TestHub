@@ -87,7 +87,7 @@ export default function TestPage() {
   const [uploading, setUploading] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const isImageBased = testInfo?.type === 'DTM_VARIANT' || testInfo?.type === 'NATIONAL_CERT' || testInfo?.type === 'ATTESTATION';
+  const isImageBased = testInfo?.type === 'DTM_VARIANT' || testInfo?.type === 'NATIONAL_CERT' || testInfo?.type === 'ATTESTATION' || testInfo?.type === 'TOPIC';
   const totalQ = isImageBased ? tqs.length : questions.length;
 
   useEffect(() => {
@@ -127,7 +127,7 @@ export default function TestPage() {
         const test: TestInfo = tRes.data;
         setTestInfo(test);
 
-        const imageBased = test.type === 'DTM_VARIANT' || test.type === 'NATIONAL_CERT' || test.type === 'ATTESTATION';
+        const imageBased = test.type === 'DTM_VARIANT' || test.type === 'NATIONAL_CERT' || test.type === 'ATTESTATION' || test.type === 'TOPIC';
         if (imageBased) {
           const qRes = await api.get(`/tests/${testId}/tq`);
           const all = qRes.data as TQ[];
@@ -255,7 +255,7 @@ export default function TestPage() {
   );
 
   // ─── DTM / ATTESTATION ────────────────────────────────────────────────────
-  if (testInfo?.type === 'DTM_VARIANT' || testInfo?.type === 'ATTESTATION') {
+  if (testInfo?.type === 'DTM_VARIANT' || testInfo?.type === 'ATTESTATION' || testInfo?.type === 'TOPIC') {
     const answeredCount = tqs.filter((tq) => {
       const a = answers.get(`o${tq.orderNo}`);
       return a && a.selectedOpts.length > 0;
@@ -387,14 +387,14 @@ export default function TestPage() {
             </div>
 
             {/* Javoblar paneli */}
-            <div style={{ width: isMobile ? '100%' : 220,
+            <div style={{ width: isMobile ? '100%' : 320,
               flexShrink: 0, backgroundColor: theme.card, border: `1px solid ${theme.border}`,
               borderRadius: 12, padding: 12, overflowY: 'auto', maxHeight: isMobile ? 280 : undefined }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                 <p style={{ color: theme.text, fontWeight: 600, fontSize: 13 }}>Javoblar</p>
                 <span style={{ fontSize: 11, color: theme.text, opacity: 0.5 }}>{answeredCount}/{tqs.length}</span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: `repeat(${Math.ceil(tqs.length / 2)}, auto)`, gridAutoFlow: 'column', columnGap: 10, rowGap: 5 }}>
                 {tqs.map((tq) => {
                   const key = `o${tq.orderNo}`;
                   const ans = answers.get(key);
