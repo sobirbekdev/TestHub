@@ -14,10 +14,27 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     this.baseUrl = `https://api.telegram.org/bot${token}`;
   }
 
-  // Dastur ishga tushganda polling boshlaydi
-  onModuleInit() {
+  // Dastur ishga tushganda: productionda webhook, lokalda polling
+  async onModuleInit() {
     if (!process.env.TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN === 'your-bot-token') return;
-    this.startPolling();
+
+    // Render avtomatik RENDER_EXTERNAL_URL beradi; yoki TELEGRAM_WEBHOOK_URL qo'lda
+    const publicUrl = process.env.TELEGRAM_WEBHOOK_URL || process.env.RENDER_EXTERNAL_URL || process.env.BACKEND_URL;
+
+    if (publicUrl) {
+      // WEBHOOK rejimi — Render bepul tarifi uxlab qolsa ham Telegram qayta yuboradi
+      const webhookUrl = `${publicUrl.replace(/\/$/, '')}/api/telegram/webhook`;
+      try {
+        await this.setWebhook(webhookUrl);
+        this.logger.log(`🤖 Telegram webhook o'rnatildi: ${webhookUrl}`);
+      } catch (e: any) {
+        this.logger.error(`Webhook o'rnatilmadi, polling'ga o'tamiz: ${e?.message}`);
+        this.startPolling();
+      }
+    } else {
+      // Lokal dev — webhook URL yo'q, polling ishlatamiz
+      this.startPolling();
+    }
   }
 
   onModuleDestroy() {
@@ -70,7 +87,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     const firstNum = parseInt(match[1]);
     const questionNo = parseInt(match[2]);
 
-    // 1. telegramId orqali qidirish (foydalanuvchi o'zi belgilagan)
+    // 1. telegramId orqali qidirish (foydalanuvchi o'zi belgilagan — eng aniq)
     const byTelegramId = await this.prisma.test.findUnique({ where: { telegramId: firstNum } });
     if (byTelegramId) {
       await this.setVideoFileId(byTelegramId.id, questionNo, fileId);
@@ -78,15 +95,8 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
-    // 2. testId orqali qidirish
-    const test = await this.prisma.test.findUnique({ where: { id: firstNum } });
-    if (test) {
-      await this.setVideoFileId(firstNum, questionNo, fileId);
-      this.logger.log(`✅ [${chatTitle}] test=${firstNum} (${test.title}) savol=${questionNo} saqlandi`);
-      return;
-    }
-
-    // 3. variantNo orqali qidirish
+    // 2. variantNo orqali qidirish (foydalanuvchilar variant raqamida o'ylaydi,
+    //    masalan "6:3" = 6-variant — shuning uchun DB id dan OLDIN tekshiriladi)
     const byVariant = await this.prisma.test.findFirst({
       where: { variantNo: firstNum },
       orderBy: { id: 'asc' },
@@ -94,6 +104,14 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     if (byVariant) {
       await this.setVideoFileId(byVariant.id, questionNo, fileId);
       this.logger.log(`✅ [${chatTitle}] variant=${firstNum} → test=${byVariant.id} (${byVariant.title}) savol=${questionNo} saqlandi`);
+      return;
+    }
+
+    // 3. DB test id orqali qidirish (oxirgi variant)
+    const test = await this.prisma.test.findUnique({ where: { id: firstNum } });
+    if (test) {
+      await this.setVideoFileId(firstNum, questionNo, fileId);
+      this.logger.log(`✅ [${chatTitle}] test id=${firstNum} (${test.title}) savol=${questionNo} saqlandi`);
       return;
     }
 
@@ -134,7 +152,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     return res.data;
   }
 
-  // Webhook orqali kelgan xabarni qayta ishlash
+  // Webhook orqali kelgan xabarni qayta ishlash (polling bilan bir xil logika)
   async handleWebhook(body: any) {
     // Kanal posti yoki oddiy xabar
     const msg = body?.channel_post || body?.message;
@@ -143,23 +161,9 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     const video = msg.video || msg.document;
     if (!video) return { ok: true };
 
-    const fileId: string = video.file_id;
-    const caption: string = msg.caption || '';
-
-    // Caption formati: "testId:savolNo" → masalan "12:5"
-    // Yoki "12:5 - biror izoh" ham bo'lishi mumkin
-    const match = caption.match(/^(\d+)\s*[:–-]\s*(\d+)/);
-    if (match) {
-      const testId = parseInt(match[1]);
-      const questionNo = parseInt(match[2]);
-      await this.setVideoFileId(testId, questionNo, fileId);
-      this.logger.log(`✅ Avtomatik saqlandi: test=${testId}, savol=${questionNo}, fileId=${fileId}`);
-      return { ok: true, saved: { testId, questionNo } };
-    }
-
-    // Caption yo'q yoki format to'g'ri emas — file_id ni logga yozamiz
-    this.logger.log(`📥 Video keldi (caption yo'q/noto'g'ri): ${fileId} | caption: "${caption}"`);
-    return { ok: true, fileId };
+    // Variant/telegramId/testId aniq logikasi bilan saqlash
+    await this.processVideoMessage(video.file_id, msg.caption || '', msg.chat?.title || '');
+    return { ok: true };
   }
 
   // getUpdates orqali oxirgi videolarni olish
