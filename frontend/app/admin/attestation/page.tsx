@@ -531,8 +531,12 @@ export default function AttestationPage() {
                     {loading ? (
                       <div style={{ color: theme.text, opacity: 0.4, textAlign: 'center', padding: 40 }}>Yuklanmoqda...</div>
                     ) : (
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: `repeat(${Math.ceil(questions.length / 2)}, auto)`, gridAutoFlow: 'column', gap: 8 }}>
-                        {questions.map(q => (
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                        {[0, 1].map(col => {
+                          const half = Math.ceil(questions.length / 2);
+                          return (
+                            <div key={col} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                              {questions.slice(col * half, col * half + half).map(q => (
                           <div key={q.orderNo} style={{ ...s.card, borderRadius: 12, padding: '12px 16px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
                               <span style={{ color: theme.accent, fontWeight: 800, fontSize: 15, minWidth: 28 }}>{q.orderNo}</span>
@@ -571,7 +575,10 @@ export default function AttestationPage() {
                               </div>
                             </div>
                           </div>
-                        ))}
+                              ))}
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </>
@@ -579,10 +586,15 @@ export default function AttestationPage() {
 
                 {/* Text mode */}
                 {qMode === 'text' && (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: `repeat(${Math.ceil(questions.length / 2)}, auto)`, gridAutoFlow: 'column', gap: 8 }}>
-                    {loading ? (
-                      <div style={{ color: theme.text, opacity: 0.4, textAlign: 'center', padding: 40 }}>Yuklanmoqda...</div>
-                    ) : questions.map(q => (
+                  loading ? (
+                    <div style={{ color: theme.text, opacity: 0.4, textAlign: 'center', padding: 40 }}>Yuklanmoqda...</div>
+                  ) : (
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                    {[0, 1].map(col => {
+                      const half = Math.ceil(questions.length / 2);
+                      return (
+                        <div key={col} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          {questions.slice(col * half, col * half + half).map(q => (
                       <div key={q.orderNo} style={{ ...s.card, borderRadius: 12, padding: '12px 16px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
                           <span style={{ color: theme.accent, fontWeight: 800, fontSize: 15, minWidth: 28 }}>{q.orderNo}</span>
@@ -610,8 +622,12 @@ export default function AttestationPage() {
                           ))}
                         </div>
                       </div>
-                    ))}
+                          ))}
+                        </div>
+                      );
+                    })}
                   </div>
+                  )
                 )}
               </>
             )}

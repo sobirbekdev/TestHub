@@ -394,26 +394,33 @@ export default function TestPage() {
                 <p style={{ color: theme.text, fontWeight: 600, fontSize: 13 }}>Javoblar</p>
                 <span style={{ fontSize: 11, color: theme.text, opacity: 0.5 }}>{answeredCount}/{tqs.length}</span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: `repeat(${Math.ceil(tqs.length / 2)}, auto)`, gridAutoFlow: 'column', columnGap: 10, rowGap: 5 }}>
-                {tqs.map((tq) => {
-                  const key = `o${tq.orderNo}`;
-                  const ans = answers.get(key);
-                  const selected = ans?.selectedOpts?.[0];
+              <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                {[0, 1].map((col) => {
+                  const half = Math.ceil(tqs.length / 2);
                   return (
-                    <div key={tq.orderNo} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <span style={{ color: theme.text, opacity: 0.6, fontSize: 11, minWidth: 18, textAlign: 'right' }}>{tq.orderNo}.</span>
-                      {['A', 'B', 'C', 'D'].map((opt) => (
-                        <button key={opt} onClick={() => selectOpt(key, opt)}
-                          style={{
-                            flex: 1, height: 26, borderRadius: 5,
-                            border: `2px solid ${selected === opt ? '#10b981' : theme.border}`,
-                            backgroundColor: selected === opt ? '#10b981' : 'transparent',
-                            color: selected === opt ? '#fff' : theme.text,
-                            fontWeight: 700, cursor: 'pointer', fontSize: 11,
-                          }}>
-                          {opt}
-                        </button>
-                      ))}
+                    <div key={col} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      {tqs.slice(col * half, col * half + half).map((tq) => {
+                        const key = `o${tq.orderNo}`;
+                        const ans = answers.get(key);
+                        const selected = ans?.selectedOpts?.[0];
+                        return (
+                          <div key={tq.orderNo} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <span style={{ color: theme.text, opacity: 0.6, fontSize: 11, minWidth: 18, textAlign: 'right' }}>{tq.orderNo}.</span>
+                            {['A', 'B', 'C', 'D'].map((opt) => (
+                              <button key={opt} onClick={() => selectOpt(key, opt)}
+                                style={{
+                                  flex: 1, height: 26, borderRadius: 5,
+                                  border: `2px solid ${selected === opt ? '#10b981' : theme.border}`,
+                                  backgroundColor: selected === opt ? '#10b981' : 'transparent',
+                                  color: selected === opt ? '#fff' : theme.text,
+                                  fontWeight: 700, cursor: 'pointer', fontSize: 11,
+                                }}>
+                                {opt}
+                              </button>
+                            ))}
+                          </div>
+                        );
+                      })}
                     </div>
                   );
                 })}

@@ -538,23 +538,30 @@ export default function AdminGroupTestsPage() {
                     {qLoading ? (
                       <div style={{ color: theme.text, opacity: 0.4, textAlign: 'center', padding: 40 }}>Yuklanmoqda...</div>
                     ) : (
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: `repeat(${Math.ceil(questions.length / 2)}, auto)`, gridAutoFlow: 'column', gap: 8 }}>
-                        {questions.map((q) => (
-                          <div key={q.orderNo} style={{ ...s.card, borderRadius: 12, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
-                            <span style={{ color: theme.accent, fontWeight: 700, fontSize: 15, minWidth: 26 }}>{q.orderNo}</span>
-                            <div style={{ display: 'flex', gap: 5, flex: 1 }}>
-                              {OPTS.map((opt) => (
-                                <button key={opt} onClick={() => saveAnswer(q.orderNo, opt)}
-                                  style={{ flex: 1, height: 34, borderRadius: 8, border: `2px solid ${q.correctAnswer === opt ? '#10b981' : theme.border}`, backgroundColor: q.correctAnswer === opt ? '#10b981' : 'transparent', color: q.correctAnswer === opt ? '#fff' : theme.text, fontWeight: 700, cursor: 'pointer', fontSize: 13 }}>
-                                  {opt}
-                                </button>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                        {[0, 1].map((col) => {
+                          const half = Math.ceil(questions.length / 2);
+                          return (
+                            <div key={col} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                              {questions.slice(col * half, col * half + half).map((q) => (
+                                <div key={q.orderNo} style={{ ...s.card, borderRadius: 12, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                                  <span style={{ color: theme.accent, fontWeight: 700, fontSize: 15, minWidth: 26 }}>{q.orderNo}</span>
+                                  <div style={{ display: 'flex', gap: 5, flex: 1 }}>
+                                    {OPTS.map((opt) => (
+                                      <button key={opt} onClick={() => saveAnswer(q.orderNo, opt)}
+                                        style={{ flex: 1, height: 34, borderRadius: 8, border: `2px solid ${q.correctAnswer === opt ? '#10b981' : theme.border}`, backgroundColor: q.correctAnswer === opt ? '#10b981' : 'transparent', color: q.correctAnswer === opt ? '#fff' : theme.text, fontWeight: 700, cursor: 'pointer', fontSize: 13 }}>
+                                        {opt}
+                                      </button>
+                                    ))}
+                                  </div>
+                                  <input type="number" defaultValue={q.scorePoint || 1} min={0} max={5} step={0.5}
+                                    onBlur={(e) => setScore(q.orderNo, parseFloat(e.target.value))}
+                                    style={{ width: 44, padding: '3px 5px', backgroundColor: theme.input, border: `1px solid ${theme.border}`, color: theme.text, borderRadius: 6, outline: 'none', fontSize: 12 }} />
+                                </div>
                               ))}
                             </div>
-                            <input type="number" defaultValue={q.scorePoint || 1} min={0} max={5} step={0.5}
-                              onBlur={(e) => setScore(q.orderNo, parseFloat(e.target.value))}
-                              style={{ width: 44, padding: '3px 5px', backgroundColor: theme.input, border: `1px solid ${theme.border}`, color: theme.text, borderRadius: 6, outline: 'none', fontSize: 12 }} />
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>
