@@ -12,10 +12,11 @@ export default function AdminUsersPage() {
   const { theme } = useThemeStore();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [staff, setStaff] = useState({ phone: '', name: '', role: 'CURATOR' as Role });
+  const [adding, setAdding] = useState(false);
 
-  useEffect(() => {
-    api.get('/users').then((r) => { setUsers(r.data); setLoading(false); }).catch(() => setLoading(false));
-  }, []);
+  const load = () => api.get('/users').then((r) => { setUsers(r.data); setLoading(false); }).catch(() => setLoading(false));
+  useEffect(() => { load(); }, []);
 
   const changeRole = async (id: number, role: Role) => {
     try {
@@ -25,11 +26,51 @@ export default function AdminUsersPage() {
     } catch { toast.error('Xatolik'); }
   };
 
+  const addStaff = async () => {
+    if (!staff.phone.trim()) return toast.error('Telefon raqamini kiriting');
+    setAdding(true);
+    try {
+      await api.post('/users/staff', { phone: staff.phone.trim(), role: staff.role, name: staff.name.trim() || undefined });
+      toast.success(`${ROLE_LABELS[staff.role]} qo'shildi`);
+      setStaff({ phone: '', name: '', role: 'CURATOR' });
+      await load();
+    } catch (e: any) { toast.error(e.response?.data?.message || 'Xatolik'); }
+    setAdding(false);
+  };
+
+  const inp: React.CSSProperties = {
+    padding: '9px 12px', backgroundColor: theme.card, border: `1px solid ${theme.border}`,
+    color: theme.text, borderRadius: 9, outline: 'none', fontSize: 14,
+  };
+
   return (
     <div className="animate-fade-in">
       <h1 style={{ color: theme.text, fontSize: 20, fontWeight: 700, marginBottom: 20 }}>
         👤 Foydalanuvchilar {loading ? '' : `(${users.length})`}
       </h1>
+
+      {/* Kurator/o'qituvchi qo'shish */}
+      <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: 14, padding: 16, marginBottom: 20 }}>
+        <p style={{ color: theme.text, fontWeight: 600, fontSize: 14, marginBottom: 10 }}>➕ Kurator / O'qituvchi qo'shish</p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <input value={staff.phone} onChange={(e) => setStaff((p) => ({ ...p, phone: e.target.value }))}
+            placeholder="+998901234567" style={{ ...inp, flex: '1 1 160px' }} />
+          <input value={staff.name} onChange={(e) => setStaff((p) => ({ ...p, name: e.target.value }))}
+            placeholder="Ism (ixtiyoriy)" style={{ ...inp, flex: '1 1 140px' }} />
+          <select value={staff.role} onChange={(e) => setStaff((p) => ({ ...p, role: e.target.value as Role }))} style={inp}>
+            <option value="CURATOR">Kurator</option>
+            <option value="TEACHER">O'qituvchi</option>
+          </select>
+          <button onClick={addStaff} disabled={adding}
+            style={{ padding: '9px 20px', background: theme.accent, color: '#fff', borderRadius: 9, fontWeight: 600, border: 'none', cursor: adding ? 'default' : 'pointer', opacity: adding ? 0.6 : 1 }}>
+            {adding ? '...' : "Qo'shish"}
+          </button>
+        </div>
+        <p style={{ color: theme.text, opacity: 0.45, fontSize: 12, marginTop: 8 }}>
+          Kuratorlar faqat o'zlariga biriktirilgan guruhlarni boshqaradi. Guruhga biriktirish — Guruhlar bo'limida.
+        </p>
+      </div>
+
       {loading ? (
         <div style={{ color: theme.text, opacity: 0.4, textAlign: 'center', padding: 40 }}>Yuklanmoqda...</div>
       ) : (

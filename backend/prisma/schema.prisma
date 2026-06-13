@@ -75,6 +75,7 @@ model Test {
   isActive       Boolean    @default(true)
   authorName     String?
   collectionName String?    // Kitob/to'plam nomi (Aliyev Vali → "Kimyo 2024")
+  topics         String?    // Mavzulashtirilgan test: qamrab oladigan mavzular
   coverImage     String?    // Kitob muqova rasmi URL
   pdfUrl         String?    // PDF fayl URL
   telegramId     Int?       @unique // Telegram caption uchun maxsus ID (masalan 101:5)

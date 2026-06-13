@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Body, Param, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, ParseIntPipe, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -26,6 +26,14 @@ export class UsersController {
   @Roles('SUPER_ADMIN')
   updateRole(@Param('id', ParseIntPipe) id: number, @Body() body: { role: Role }) {
     return this.usersService.updateRole(id, body.role);
+  }
+
+  // Telefon orqali kurator/o'qituvchi qo'shish
+  @Post('staff')
+  @UseGuards(RolesGuard)
+  @Roles('SUPER_ADMIN', 'TEACHER')
+  createStaff(@Body() body: { phone: string; role: Role; name?: string }) {
+    return this.usersService.createStaff(body.phone, body.role, body.name);
   }
 
   @Patch('me/name')

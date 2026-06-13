@@ -26,8 +26,10 @@ export interface Test {
   totalQ: number;
   authorName?: string;
   collectionName?: string;
+  topics?: string;
   coverImage?: string;
   pdfUrl?: string;
+  telegramId?: number;
   isPaid?: boolean;
   isActive: boolean;
   createdAt: string;

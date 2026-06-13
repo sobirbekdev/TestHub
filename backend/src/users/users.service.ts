@@ -26,6 +26,18 @@ export class UsersService {
     return this.prisma.user.update({ where: { id }, data: { role } });
   }
 
+  // Telefon raqami orqali xodim (kurator/o'qituvchi) qo'shish/tayinlash.
+  // Mavjud bo'lsa rolini yangilaymiz, bo'lmasa yaratamiz.
+  async createStaff(phone: string, role: Role, name?: string) {
+    const normalized = phone.startsWith('+') ? phone : `+${phone}`;
+    return this.prisma.user.upsert({
+      where: { phone: normalized },
+      update: { role, ...(name ? { name } : {}) },
+      create: { phone: normalized, role, name: name || null },
+      select: { id: true, phone: true, name: true, role: true, groupId: true },
+    });
+  }
+
   async updateName(id: number, name: string) {
     return this.prisma.user.update({
       where: { id },

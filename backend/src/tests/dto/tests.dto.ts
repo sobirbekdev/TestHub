@@ -39,6 +39,10 @@ export class CreateTestDto {
 
   @IsOptional()
   @IsString()
+  topics?: string;
+
+  @IsOptional()
+  @IsString()
   coverImage?: string;
 
   @IsOptional()
@@ -75,6 +79,10 @@ export class UpdateTestDto {
   @IsOptional()
   @IsString()
   collectionName?: string;
+
+  @IsOptional()
+  @IsString()
+  topics?: string;
 
   @IsOptional()
   @IsString()

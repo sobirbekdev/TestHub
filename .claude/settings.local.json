@@ -35,7 +35,10 @@
       "Bash(cp -r .next/static .next/standalone/.next/static)",
       "Bash(cp -r public .next/standalone/public)",
       "Bash(NEXT_PUBLIC_API_URL=http://localhost:4000/api node .next/standalone/server.js)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(git add *)",
+      "Bash(git commit -q -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }

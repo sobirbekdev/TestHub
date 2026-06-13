@@ -5,8 +5,10 @@ import { PrismaService } from '../prisma/prisma.service';
 export class GroupsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll() {
+  // CURATOR faqat o'ziga biriktirilgan guruhlarni ko'radi; admin/teacher hammasini
+  async findAll(user?: { id: number; role: string }) {
     return this.prisma.group.findMany({
+      where: user && user.role === 'CURATOR' ? { curatorId: user.id } : undefined,
       include: {
         _count: { select: { users: true } },
         curator: { select: { id: true, name: true, phone: true } },

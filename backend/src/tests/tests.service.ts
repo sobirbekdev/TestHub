@@ -32,6 +32,7 @@ export class TestsService {
         totalQ: true,
         authorName: true,
         collectionName: true,
+        topics: true,
         coverImage: true,
         pdfUrl: true,
         telegramId: true,

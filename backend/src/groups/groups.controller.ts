@@ -3,6 +3,7 @@ import { GroupsService } from './groups.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 @Controller('groups')
 @UseGuards(JwtAuthGuard)
@@ -10,7 +11,7 @@ export class GroupsController {
   constructor(private groupsService: GroupsService) {}
 
   @Get()
-  findAll() { return this.groupsService.findAll(); }
+  findAll(@CurrentUser() user: any) { return this.groupsService.findAll(user); }
 
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) { return this.groupsService.findOne(id); }
