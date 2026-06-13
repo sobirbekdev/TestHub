@@ -58,7 +58,10 @@ export default function TestsPage() {
 
   // Split tests into grouped (has collectionName) and flat
   const groupedTests = tests.filter(t => GROUPED_TYPES.includes(t.type));
-  const flatTests = tests.filter(t => !GROUPED_TYPES.includes(t.type));
+  // TOPIC (Mavzular) testlari "Hammasi"da alohida chiqmaydi — faqat "Mavzular" bo'limida
+  const flatTests = tests.filter(t =>
+    !GROUPED_TYPES.includes(t.type) && (t.type !== 'TOPIC' || active === 'TOPIC'),
+  );
 
   // Build flat list of collections: { key, author, collName, variants[] }
   const collMap: Record<string, { author: string; collName: string; variants: Test[] }> = {};
