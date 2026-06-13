@@ -86,14 +86,26 @@ export class AttemptsService {
     let manualPending = 0;
     let aiPending = 0;
 
+    for (const tq of testQuestions) {
+      totalPossible += tq.scorePoint || 1;
+    }
+
+    // Mavjud javoblarni bir marta o'qiymiz (har biri uchun alohida so'rov o'rniga)
+    const existing = await this.prisma.answer.findMany({
+      where: { attemptId },
+      select: { orderNo: true },
+    });
+    const existingOrderNos = new Set(existing.map((e) => e.orderNo));
+
+    const toCreate: any[] = [];
+    const updatePromises: Promise<any>[] = [];
+
     for (const ans of dto.answers) {
       const orderNo = ans.orderNo;
       if (!orderNo) continue;
 
       const tq = tqMap.get(orderNo);
-      // tq bo'lmasa ham javobni saqlaymiz (video ko'rinishi uchun)
       const scorePoint = tq?.scorePoint || 1;
-      if (tq) totalPossible += scorePoint;
 
       // Milliy Sert 36-40 (open text — admin qo'lda tekshiradi)
       const isOpen = orderNo >= 36 && orderNo <= 40 && attempt.test.type === 'NATIONAL_CERT';
@@ -106,7 +118,6 @@ export class AttemptsService {
         aiStatus = 'PENDING';
         aiPending++;
       } else if (isOpen) {
-        // 36-40 open text — admin javobi bilan matn solishtirish
         if (tq?.correctAnswer && ans.openText) {
           isCorrect = this.normalizeText(ans.openText) === this.normalizeText(tq.correctAnswer);
           if (isCorrect) {
@@ -114,11 +125,9 @@ export class AttemptsService {
             totalScored += scorePoint;
           }
         } else if (ans.openText) {
-          // admin javob kiritmagan — qo'lda tekshiriladi
           manualPending++;
         }
       } else if (tq?.correctAnswer) {
-        // A/B/C/D tekshiruv — faqat correctAnswer mavjud bo'lsa
         const selected = (ans.selectedOpts || [])[0];
         isCorrect = selected?.toUpperCase() === tq.correctAnswer.toUpperCase();
         if (isCorrect) {
@@ -126,9 +135,7 @@ export class AttemptsService {
           totalScored += scorePoint;
         }
       }
-      // tq yo'q bo'lsa — isCorrect=null, admin keyinchalik tekshiradi
 
-      // updateMany + create (partial unique index bilan muvofiqlashadi)
       const ansData = {
         selectedOpts: ans.selectedOpts || [],
         openText: ans.openText || null,
@@ -136,18 +143,23 @@ export class AttemptsService {
         isCorrect,
         aiStatus: aiStatus as any,
       };
-      const updated = await this.prisma.answer.updateMany({
-        where: { attemptId, orderNo },
-        data: ansData,
-      });
-      if (updated.count === 0) {
-        try {
-          await this.prisma.answer.create({
-            data: { attemptId, orderNo, ...ansData },
-          });
-        } catch { /* race condition — allaqachon yaratilgan */ }
+
+      if (existingOrderNos.has(orderNo)) {
+        updatePromises.push(
+          this.prisma.answer.updateMany({ where: { attemptId, orderNo }, data: ansData }),
+        );
+      } else {
+        toCreate.push({ attemptId, orderNo, ...ansData });
       }
     }
+
+    // Yangi javoblarni bitta so'rovda, mavjudlarini parallel yangilaymiz
+    await Promise.all([
+      toCreate.length > 0
+        ? this.prisma.answer.createMany({ data: toCreate, skipDuplicates: true })
+        : Promise.resolve(),
+      ...updatePromises,
+    ]);
 
     const scorePercent = totalPossible > 0 ? (totalScored / totalPossible) * 100 : 0;
 
@@ -186,6 +198,8 @@ export class AttemptsService {
     let total = 0;
     let aiPending = 0;
 
+    const upsertPromises: Promise<any>[] = [];
+
     for (const ans of dto.answers) {
       if (!ans.questionId) continue;
       const q = qMap.get(ans.questionId);
@@ -209,31 +223,33 @@ export class AttemptsService {
         total++;
       }
 
-      await this.prisma.answer.upsert({
-        where: {
-          attemptId_questionId: {
+      upsertPromises.push(
+        this.prisma.answer.upsert({
+          where: {
+            attemptId_questionId: { attemptId, questionId: ans.questionId },
+          },
+          create: {
             attemptId,
             questionId: ans.questionId,
+            selectedOpts: ans.selectedOpts || [],
+            openText: ans.openText,
+            imageUrl: ans.imageUrl,
+            isCorrect,
+            aiStatus:
+              q.qType === 'MULTI' || q.qType === 'REACTIONS' ? 'PENDING' : null,
           },
-        },
-        create: {
-          attemptId,
-          questionId: ans.questionId,
-          selectedOpts: ans.selectedOpts || [],
-          openText: ans.openText,
-          imageUrl: ans.imageUrl,
-          isCorrect,
-          aiStatus:
-            q.qType === 'MULTI' || q.qType === 'REACTIONS' ? 'PENDING' : null,
-        },
-        update: {
-          selectedOpts: ans.selectedOpts || [],
-          openText: ans.openText,
-          imageUrl: ans.imageUrl,
-          isCorrect,
-        },
-      });
+          update: {
+            selectedOpts: ans.selectedOpts || [],
+            openText: ans.openText,
+            imageUrl: ans.imageUrl,
+            isCorrect,
+          },
+        }),
+      );
     }
+
+    // Barcha javoblarni parallel yozamiz (ketma-ket emas — tezroq)
+    await Promise.all(upsertPromises);
 
     const score = total > 0 ? (correct / total) * 100 : 0;
 
