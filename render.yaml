@@ -7,7 +7,8 @@ services:
     runtime: node
     plan: free
     rootDir: backend
-    buildCommand: npm ci && npx prisma generate && npm run build
+    # NODE_ENV=production bo'lgani uchun --include=dev kerak (nest, prisma, typescript devDeps'da)
+    buildCommand: npm ci --include=dev && npx prisma generate && npm run build
     # migrate deploy — har deploy'da yangi migratsiyalarni qo'llaydi
     startCommand: npx prisma migrate deploy && node dist/main
     healthCheckPath: /api
