@@ -50,11 +50,16 @@ async function bootstrap() {
   });
   app.use('/uploads', require('express').static(uploadsDir));
 
+  // Health check (Render uchun) — global prefix DAN OLDIN, har doim 200 qaytaradi
+  app.use('/health', (req: any, res: any) => {
+    res.status(200).json({ status: 'ok' });
+  });
+
   // Global prefix
   app.setGlobalPrefix('api');
 
   const port = process.env.PORT || 4000;
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
   console.log(`🚀 Server ishlamoqda: http://localhost:${port}/api`);
 }
 

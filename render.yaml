@@ -11,7 +11,7 @@ services:
     buildCommand: npm ci --include=dev && npx prisma generate && npm run build
     # migrate deploy — har deploy'da yangi migratsiyalarni qo'llaydi
     startCommand: npx prisma migrate deploy && node dist/main
-    healthCheckPath: /api
+    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
