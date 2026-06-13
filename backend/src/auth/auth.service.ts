@@ -38,11 +38,14 @@ export class AuthService {
     const message = `TestHub: tasdiqlash kodi ${code}. 3 daqiqa ichida kiriting.`;
     await this.eskiz.sendSms(dto.phone, message);
 
+    // Eskiz (SMS) sozlanmagan bo'lsa — kodni response'da qaytaramiz (test rejim)
+    const smsConfigured = !!process.env.ESKIZ_EMAIL;
+
     return {
       success: true,
       message: 'SMS yuborildi',
-      // Dev rejimda kodni qaytaramiz
-      ...(process.env.NODE_ENV !== 'production' && { code }),
+      // Dev rejimda YOKI SMS sozlanmagan bo'lsa kodni qaytaramiz
+      ...((process.env.NODE_ENV !== 'production' || !smsConfigured) && { code }),
     };
   }
 

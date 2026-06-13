@@ -185,7 +185,7 @@ export default function LoginPage() {
               </button>
               {devCode && (
                 <div style={{ marginTop: 12, padding: '10px 14px', backgroundColor: '#10b98120', border: '1px solid #10b981', borderRadius: 10, textAlign: 'center' }}>
-                  <p style={{ color: '#10b981', fontSize: 12, marginBottom: 4 }}>🔧 Dev rejim — SMS kodi:</p>
+                  <p style={{ color: '#10b981', fontSize: 12, marginBottom: 4 }}>🔧 Test rejim — SMS kodi:</p>
                   <p style={{ color: '#10b981', fontSize: 28, fontWeight: 700, letterSpacing: 8 }}>{devCode}</p>
                   <button onClick={() => setCode(devCode)} style={{ marginTop: 6, padding: '4px 12px', backgroundColor: '#10b981', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>
                     Avtomatik to'ldirish
