@@ -91,44 +91,50 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     // Format 2: "v6:3" yoki "v6-3" — variantNo:savolNo (kolleksiyani avtomatik topadi)
     // Format 3: "6:3" — variantNo:savolNo (Format 1 bilan bir xil ko'rinsa ham kichik raqam = variant deb qabul qilinadi)
 
-    const match = caption.match(/^v?(\d+)\s*[:–\-]\s*(\d+)/i);
+    // Prefiks endi raqam yoki harf-raqam bo'lishi mumkin: "101:5", "AT1:1", "SB2-3"
+    const match = caption.match(/^v?([A-Za-z0-9]+)\s*[:–\-]\s*(\d+)/i);
     if (!match) {
       this.logger.debug(`Video keldi (caption noto'g'ri format): ${fileId} | "${caption}"`);
       return;
     }
 
-    const firstNum = parseInt(match[1]);
+    const token = match[1];
     const questionNo = parseInt(match[2]);
 
-    // 1. telegramId orqali qidirish (foydalanuvchi o'zi belgilagan — eng aniq)
-    const byTelegramId = await this.prisma.test.findUnique({ where: { telegramId: firstNum } });
-    if (byTelegramId) {
-      await this.setVideoFileId(byTelegramId.id, questionNo, fileId);
-      this.logger.log(`✅ [${chatTitle}] telegramId=${firstNum} → test=${byTelegramId.id} (${byTelegramId.title}) savol=${questionNo} saqlandi`);
-      return;
-    }
-
-    // 2. variantNo orqali qidirish (foydalanuvchilar variant raqamida o'ylaydi,
-    //    masalan "6:3" = 6-variant — shuning uchun DB id dan OLDIN tekshiriladi)
-    const byVariant = await this.prisma.test.findFirst({
-      where: { variantNo: firstNum },
-      orderBy: { id: 'asc' },
-    });
-    if (byVariant) {
-      await this.setVideoFileId(byVariant.id, questionNo, fileId);
-      this.logger.log(`✅ [${chatTitle}] variant=${firstNum} → test=${byVariant.id} (${byVariant.title}) savol=${questionNo} saqlandi`);
-      return;
-    }
-
-    // 3. DB test id orqali qidirish (oxirgi variant)
-    const test = await this.prisma.test.findUnique({ where: { id: firstNum } });
-    if (test) {
-      await this.setVideoFileId(firstNum, questionNo, fileId);
-      this.logger.log(`✅ [${chatTitle}] test id=${firstNum} (${test.title}) savol=${questionNo} saqlandi`);
+    const testId = await this.resolveTestIdFromToken(token);
+    if (testId) {
+      await this.setVideoFileId(testId, questionNo, fileId);
+      this.logger.log(`✅ [${chatTitle}] "${token}" → test=${testId} savol=${questionNo} saqlandi`);
       return;
     }
 
     this.logger.warn(`⚠️ [${chatTitle}] test/variant topilmadi: "${caption}" | fileId: ${fileId}`);
+  }
+
+  // Caption prefiksini (token) testga bog'laymiz: telegramId → variantNo → DB id
+  private async resolveTestIdFromToken(token: string): Promise<number | null> {
+    // 1. telegramId orqali (foydalanuvchi o'zi belgilagan — eng aniq, harf ham bo'lishi mumkin)
+    const byTelegramId = await this.prisma.test.findFirst({
+      where: { telegramId: { equals: token, mode: 'insensitive' } },
+    });
+    if (byTelegramId) return byTelegramId.id;
+
+    // Token sof raqam bo'lsa — variantNo / DB id bo'yicha ham qidiramiz
+    if (/^\d+$/.test(token)) {
+      const num = parseInt(token);
+      // 2. variantNo orqali (foydalanuvchilar variant raqamida o'ylaydi)
+      const byVariant = await this.prisma.test.findFirst({
+        where: { variantNo: num },
+        orderBy: { id: 'asc' },
+      });
+      if (byVariant) return byVariant.id;
+
+      // 3. DB test id orqali (oxirgi variant)
+      const byId = await this.prisma.test.findUnique({ where: { id: num } });
+      if (byId) return byId.id;
+    }
+
+    return null;
   }
 
   // Video file_id ni savolga biriktirish
@@ -383,12 +389,16 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       if (!video) continue;
 
       const caption = msg.caption || '';
-      const match = caption.match(/^(\d+)\s*[:–-]\s*(\d+)/);
+      const match = caption.match(/^v?([A-Za-z0-9]+)\s*[:–-]\s*(\d+)/i);
       if (match) {
-        const testId = parseInt(match[1]);
         const questionNo = parseInt(match[2]);
-        await this.setVideoFileId(testId, questionNo, video.file_id);
-        saved.push({ testId, questionNo, fileId: video.file_id });
+        const testId = await this.resolveTestIdFromToken(match[1]);
+        if (testId) {
+          await this.setVideoFileId(testId, questionNo, video.file_id);
+          saved.push({ testId, questionNo, fileId: video.file_id });
+        } else {
+          skipped.push({ fileId: video.file_id, caption });
+        }
       } else {
         skipped.push({ fileId: video.file_id, caption });
       }

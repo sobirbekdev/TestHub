@@ -50,8 +50,8 @@ export class CreateTestDto {
   pdfUrl?: string;
 
   @IsOptional()
-  @IsInt()
-  telegramId?: number;
+  @IsString()
+  telegramId?: string;
 }
 
 export class UpdateTestDto {
@@ -93,8 +93,8 @@ export class UpdateTestDto {
   pdfUrl?: string;
 
   @IsOptional()
-  @IsInt()
-  telegramId?: number;
+  @IsString()
+  telegramId?: string;
 }
 
 export class UpsertTestQuestionDto {

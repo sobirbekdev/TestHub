@@ -416,10 +416,10 @@ export default function AdminGroupTestsPage() {
               </label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ color: theme.text, opacity: 0.6, fontSize: 12 }}>📱 Telegram ID:</span>
-                <input type="number" placeholder="—" defaultValue={selected.telegramId ?? ''} key={selected.id}
-                  style={{ width: 80, padding: '7px 10px', borderRadius: 9, border: `1px solid ${theme.border}`, backgroundColor: theme.bg, color: theme.text, fontSize: 14 }}
+                <input type="text" placeholder="AT1, SB2..." defaultValue={selected.telegramId ?? ''} key={selected.id}
+                  style={{ width: 90, padding: '7px 10px', borderRadius: 9, border: `1px solid ${theme.border}`, backgroundColor: theme.bg, color: theme.text, fontSize: 14 }}
                   onBlur={async (e) => {
-                    const val = e.target.value ? parseInt(e.target.value) : null;
+                    const val = e.target.value.trim() || null;
                     if (val === (selected.telegramId ?? null)) return;
                     try {
                       await api.patch(`/tests/${selected.id}`, { telegramId: val });

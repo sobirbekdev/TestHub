@@ -29,7 +29,7 @@ export interface Test {
   topics?: string;
   coverImage?: string;
   pdfUrl?: string;
-  telegramId?: number;
+  telegramId?: string;
   isPaid?: boolean;
   isActive: boolean;
   createdAt: string;

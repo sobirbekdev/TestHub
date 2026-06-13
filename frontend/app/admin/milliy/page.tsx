@@ -26,7 +26,7 @@ function isOpen(orderNo: number) { return orderNo >= 36 && orderNo <= 40; }
 function isAi(orderNo: number) { return orderNo >= 41 && orderNo <= 43; }
 
 interface TQ { orderNo: number; imageUrl?: string; questionText?: string; correctAnswer?: string; scorePoint?: number; }
-interface Test { id: number; title: string; variantNo?: number; year?: number; duration: number; totalQ: number; pdfUrl?: string; coverImage?: string; authorName?: string; collectionName?: string; price?: number; telegramId?: number; }
+interface Test { id: number; title: string; variantNo?: number; year?: number; duration: number; totalQ: number; pdfUrl?: string; coverImage?: string; authorName?: string; collectionName?: string; price?: number; telegramId?: string; }
 
 // Savol uchun 3 xil rejim
 type QMode = 'image' | 'text' | 'pdf';
@@ -507,13 +507,13 @@ export default function MilliyPage() {
                 <div style={{ color: theme.text, opacity: 0.5, fontSize: 12 }}>Kanal caption uchun: <b>{selectedTest.telegramId ?? '—'}</b> → caption: <b>{selectedTest.telegramId}:5</b></div>
               </div>
               <input
-                type="number"
-                placeholder="masalan 101"
+                type="text"
+                placeholder="masalan 101 yoki AT1"
                 defaultValue={selectedTest.telegramId ?? ''}
                 key={selectedTest.id}
-                style={{ width: 100, padding: '7px 10px', borderRadius: 9, border: `1px solid ${theme.border}`, backgroundColor: theme.bg, color: theme.text, fontSize: 14 }}
+                style={{ width: 110, padding: '7px 10px', borderRadius: 9, border: `1px solid ${theme.border}`, backgroundColor: theme.bg, color: theme.text, fontSize: 14 }}
                 onBlur={async e => {
-                  const val = e.target.value ? parseInt(e.target.value) : null;
+                  const val = e.target.value.trim() || null;
                   if (val === (selectedTest.telegramId ?? null)) return;
                   try {
                     await api.patch(`/tests/${selectedTest.id}`, { telegramId: val });

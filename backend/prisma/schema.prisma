@@ -78,7 +78,7 @@ model Test {
   topics         String?    // Mavzulashtirilgan test: qamrab oladigan mavzular
   coverImage     String?    // Kitob muqova rasmi URL
   pdfUrl         String?    // PDF fayl URL
-  telegramId     Int?       @unique // Telegram caption uchun maxsus ID (masalan 101:5)
+  telegramId     String?    @unique // Telegram caption prefiksi (raqam yoki harf: 101, AT1, SB2)
   createdAt      DateTime   @default(now())
 
   questions   TestQuestion[]
