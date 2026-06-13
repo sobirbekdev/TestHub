@@ -105,7 +105,44 @@ export class TestsService {
 
   // ─── Testni yangilash ────────────────────────────────────────────────────────
   async update(id: number, dto: UpdateTestDto) {
-    await this.ensureExists(id);
+    const current = await this.ensureExists(id);
+
+    // telegramId ("ID") o'zgarsa — videolar ham shu ID bilan birga ko'chadi.
+    // Agar yangi ID boshqa testda bo'lsa, ikkala testning ID va videolari almashtiriladi (swap).
+    const changingTgId =
+      dto.telegramId !== undefined && dto.telegramId !== current.telegramId;
+
+    if (changingTgId) {
+      const newTgId = dto.telegramId ?? null;
+      const other =
+        newTgId === null
+          ? null
+          : await this.prisma.test.findUnique({ where: { telegramId: newTgId } });
+
+      // Boshqa test shu yangi ID ga ega bo'lsa — to'liq swap (ID + videolar)
+      if (other && other.id !== id) {
+        const TEMP = -1_000_000 - id; // vaqtinchalik to'qnashmaydigan testId
+        await this.prisma.$transaction(async (tx) => {
+          // 1. unique cheklov uchun ikkala testdan ham telegramId ni bo'shatamiz
+          await tx.test.update({ where: { id: other.id }, data: { telegramId: null } });
+          await tx.test.update({ where: { id }, data: { telegramId: null } });
+
+          // 2. videolarni almashtiramiz (vaqtinchalik TEMP orqali)
+          await tx.videoSolution.updateMany({ where: { testId: other.id }, data: { testId: TEMP } });
+          await tx.videoSolution.updateMany({ where: { testId: id }, data: { testId: other.id } });
+          await tx.videoSolution.updateMany({ where: { testId: TEMP }, data: { testId: id } });
+
+          // 3. telegramId larni almashtiramiz
+          await tx.test.update({ where: { id }, data: { telegramId: newTgId } });
+          await tx.test.update({ where: { id: other.id }, data: { telegramId: current.telegramId } });
+        });
+
+        // qolgan maydonlarni (telegramId dan tashqari) yangilaymiz
+        const { telegramId, ...rest } = dto;
+        return this.prisma.test.update({ where: { id }, data: rest });
+      }
+    }
+
     return this.prisma.test.update({ where: { id }, data: dto });
   }
 
