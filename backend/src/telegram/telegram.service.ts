@@ -66,14 +66,14 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
           offset: this.lastUpdateId + 1,
           limit: 50,
           timeout: 0,
-          allowed_updates: ['message', 'channel_post'],
+          allowed_updates: ['message', 'channel_post', 'edited_message', 'edited_channel_post'],
         },
         timeout: 8000,
       });
       const updates: any[] = res.data?.result || [];
       for (const upd of updates) {
         if (upd.update_id > this.lastUpdateId) this.lastUpdateId = upd.update_id;
-        const msg = upd.channel_post || upd.message;
+        const msg = upd.channel_post || upd.edited_channel_post || upd.message || upd.edited_message;
         if (!msg) continue;
         const video = msg.video || msg.document;
         if (!video) continue;
@@ -139,6 +139,11 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
 
   // Video file_id ni savolga biriktirish
   async setVideoFileId(testId: number, questionNo: number, fileId: string) {
+    // Caption tahrirlangan bo'lsa — shu file boshqa joyga bog'langan bo'lsa olib tashlaymiz
+    // (xato ID yozib keyin to'g'rilaganda video ko'chadi, ikki joyda turmaydi)
+    await this.prisma.videoSolution.deleteMany({
+      where: { fileId, NOT: { testId, questionNo } },
+    });
     return this.prisma.videoSolution.upsert({
       where: { testId_questionNo: { testId, questionNo } },
       create: { testId, questionNo, fileId },
@@ -165,16 +170,16 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
   async setWebhook(webhookUrl: string) {
     const res = await axios.post(`${this.baseUrl}/setWebhook`, {
       url: webhookUrl,
-      // channel_post = kanaldan kelgan xabarlar
-      allowed_updates: ['message', 'channel_post'],
+      // channel_post = kanaldan kelgan xabarlar; edited_* = tahrirlanganlar
+      allowed_updates: ['message', 'channel_post', 'edited_message', 'edited_channel_post'],
     });
     return res.data;
   }
 
   // Webhook orqali kelgan xabarni qayta ishlash (polling bilan bir xil logika)
   async handleWebhook(body: any) {
-    // 1) Kanal posti — video yechimlar
-    const channelMsg = body?.channel_post;
+    // 1) Kanal posti (yangi yoki tahrirlangan) — video yechimlar
+    const channelMsg = body?.channel_post || body?.edited_channel_post;
     if (channelMsg) {
       const video = channelMsg.video || channelMsg.document;
       if (video) {
@@ -188,7 +193,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     }
 
     // 2) Shaxsiy xabar — bot bilan suhbat (/start, telefon ulashish)
-    const msg = body?.message;
+    const msg = body?.message || body?.edited_message;
     if (msg && msg.chat?.type === 'private') {
       await this.handlePrivateMessage(msg).catch((e) =>
         this.logger.error(`Private xabar xatosi: ${e?.message}`),

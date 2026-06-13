@@ -236,9 +236,17 @@ export default function AdminGroupTestsPage() {
 
   const saveVideo = async (questionNo: number, fileId: string) => {
     if (!selected) return;
+    const trimmed = fileId.trim();
     try {
-      await api.post('/telegram/videos', { testId: selected.id, questionNo, fileId });
-      setVideos((p) => ({ ...p, [questionNo]: fileId }));
+      if (!trimmed) {
+        // Bo'sh qoldirilsa — file_id ni o'chiramiz
+        await api.delete(`/telegram/videos/${selected.id}/${questionNo}`);
+        setVideos((p) => { const n = { ...p }; delete n[questionNo]; return n; });
+        toast.success(`${questionNo}-savol videosi o'chirildi`);
+        return;
+      }
+      await api.post('/telegram/videos', { testId: selected.id, questionNo, fileId: trimmed });
+      setVideos((p) => ({ ...p, [questionNo]: trimmed }));
       toast.success(`${questionNo}-savol video saqlandi`);
     } catch { toast.error('Xatolik'); }
   };
@@ -575,7 +583,7 @@ export default function AdminGroupTestsPage() {
                   <div key={n} style={{ display: 'flex', alignItems: 'center', gap: 10, ...s.card, borderRadius: 10, padding: '8px 14px' }}>
                     <span style={{ color: theme.accent, fontWeight: 700, minWidth: 28, fontSize: 14 }}>{n}</span>
                     <input defaultValue={videos[n] || ''} placeholder="Telegram file_id..."
-                      onBlur={(e) => { if (e.target.value) saveVideo(n, e.target.value); }}
+                      onBlur={(e) => { if (e.target.value.trim() !== (videos[n] || '')) saveVideo(n, e.target.value); }}
                       style={{ flex: 1, padding: '6px 10px', backgroundColor: theme.input, border: `1px solid ${theme.border}`, color: theme.text, borderRadius: 7, outline: 'none', fontSize: 12 }} />
                     {videos[n] && <span style={{ color: '#10b981', fontSize: 12 }}>✓</span>}
                   </div>
