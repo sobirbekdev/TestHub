@@ -2,6 +2,8 @@ import {
   Injectable,
   BadRequestException,
   UnauthorizedException,
+  Logger,
+  OnModuleInit,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as crypto from 'crypto';
@@ -10,12 +12,40 @@ import { EskizService } from './eskiz.service';
 import { SendOtpDto, VerifyOtpDto } from './dto/auth.dto';
 
 @Injectable()
-export class AuthService {
+export class AuthService implements OnModuleInit {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private prisma: PrismaService,
     private jwt: JwtService,
     private eskiz: EskizService,
   ) {}
+
+  // Ishga tushganda: SUPER_ADMIN_PHONE env'idagi raqamni SUPER_ADMIN qiladi.
+  // Bir nechta raqamni vergul bilan ajratish mumkin: "+998901112233,+998905556677"
+  async onModuleInit() {
+    const raw = process.env.SUPER_ADMIN_PHONE;
+    if (!raw) return;
+
+    const phones = raw
+      .split(',')
+      .map((p) => p.trim())
+      .filter(Boolean)
+      .map((p) => (p.startsWith('+') ? p : `+${p}`));
+
+    for (const phone of phones) {
+      try {
+        const user = await this.prisma.user.upsert({
+          where: { phone },
+          update: { role: 'SUPER_ADMIN' },
+          create: { phone, role: 'SUPER_ADMIN' },
+        });
+        this.logger.log(`👑 SUPER_ADMIN tayinlandi: ${user.phone} (id=${user.id})`);
+      } catch (e: any) {
+        this.logger.warn(`SUPER_ADMIN tayinlanmadi (${phone}): ${e?.message}`);
+      }
+    }
+  }
 
   // JWT token + user obyektini bitta joydan qaytaramiz
   private buildAuthResponse(user: {
