@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useThemeStore } from '@/store/theme';
+import { useAuthStore } from '@/store/auth';
 import { AttemptResult, Answer } from '@/types';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -12,7 +13,9 @@ export default function ResultPage() {
   const { attemptId } = useParams<{ attemptId: string }>();
   const router = useRouter();
   const { theme } = useThemeStore();
+  const { user } = useAuthStore();
   const [result, setResult] = useState<AttemptResult | null>(null);
+  const [lb, setLb] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeNo, setActiveNo] = useState<number | null>(null);
   const [videoBlobUrl, setVideoBlobUrl] = useState<string | null>(null);
@@ -46,6 +49,15 @@ export default function ResultPage() {
 
     return () => { if (timer) clearInterval(timer); };
   }, [attemptId]);
+
+  // Guruh/test reytingi (TOPIC testlar uchun — kim eng ko'p ishladi)
+  useEffect(() => {
+    if (result?.test?.type === 'TOPIC') {
+      api.get(`/leaderboard/test/${result.test.id}`)
+        .then((r) => setLb(r.data))
+        .catch(() => {});
+    }
+  }, [result?.test?.id, result?.test?.type]);
 
   const openVideo = async (ans: Answer) => {
     const no = ans.orderNo ?? 0;
@@ -259,6 +271,40 @@ export default function ResultPage() {
             </div>
           );
         })()}
+
+        {/* ── Test reytingi (kim eng ko'p ishladi) ── */}
+        {lb.length > 0 && (
+          <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: 18, padding: 20, marginBottom: 16 }}>
+            <p style={{ color: theme.text, fontWeight: 600, marginBottom: 12 }}>🏆 Reyting <span style={{ opacity: 0.45, fontWeight: 400, fontSize: 13 }}>— shu test bo'yicha</span></p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {lb.slice(0, 10).map((e: any) => {
+                const isMe = e.userId === user?.id;
+                const medal = e.rank <= 3 ? ['🥇', '🥈', '🥉'][e.rank - 1] : `#${e.rank}`;
+                return (
+                  <div key={e.userId} style={{
+                    display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 10,
+                    backgroundColor: isMe ? `${theme.accent}15` : theme.input,
+                    border: `1px solid ${isMe ? theme.accent : 'transparent'}`,
+                  }}>
+                    <span style={{ width: 28, fontWeight: 700, fontSize: e.rank <= 3 ? 18 : 13, color: theme.text }}>{medal}</span>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ color: theme.text, fontWeight: isMe ? 700 : 500, fontSize: 14, margin: 0 }}>
+                        {e.name} {isMe && '(Siz)'}
+                      </p>
+                      {e.groupName && <p style={{ color: theme.text, opacity: 0.45, fontSize: 11, margin: 0 }}>{e.groupName}</p>}
+                    </div>
+                    {e.timeSec != null && (
+                      <span style={{ color: theme.text, opacity: 0.4, fontSize: 11 }}>
+                        {Math.floor(e.timeSec / 60)}:{String(e.timeSec % 60).padStart(2, '0')}
+                      </span>
+                    )}
+                    <span style={{ color: theme.accent, fontWeight: 700, fontSize: 15 }}>{Math.round(e.score)}%</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* ── Savol tugmalari gridi ── */}
         <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: 18, padding: 20, marginBottom: 16 }}>
