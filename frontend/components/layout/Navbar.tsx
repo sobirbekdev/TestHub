@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/auth';
 const NAV = [
   { href: '/home', icon: '🏠', label: 'Bosh sahifa' },
   { href: '/tests', icon: '📋', label: 'Testlar' },
+  { href: '/group', icon: '👥', label: 'Guruh' },
   { href: '/rating', icon: '🏆', label: 'Reyting' },
   { href: '/stats', icon: '📊', label: 'Statistika' },
 ];

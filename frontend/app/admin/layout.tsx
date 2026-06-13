@@ -14,6 +14,7 @@ const ADMIN_NAV = [
   { href: '/admin/dtm', label: '🎯 DTM' },
   { href: '/admin/ai', label: '🤖 AI tekshiruv' },
   { href: '/admin/groups', label: '👥 Guruhlar' },
+  { href: '/admin/group-tests', label: '📚 Guruh testlari' },
   { href: '/admin/users', label: '👤 Foydalanuvchilar' },
   { href: '/admin/payments', label: '💳 To\'lovlar' },
 ];

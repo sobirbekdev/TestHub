@@ -175,25 +175,87 @@ export class TestsService {
     return { success: true };
   }
 
-  // ─── Testni guruhga ochish ───────────────────────────────────────────────────
-  async openForGroup(testId: number, groupId: number, endsAt?: Date) {
+  // ─── Testni guruhga ochish (boshlanish + tugash oynasi bilan) ───────────────
+  async openForGroup(testId: number, groupId: number, startsAt?: Date, endsAt?: Date) {
     await this.ensureExists(testId);
 
-    // Guruhga biriktirish
+    // Guruhga biriktirish + oynani belgilash
     await this.prisma.testGroup.upsert({
       where: { testId_groupId: { testId, groupId } },
-      create: { testId, groupId },
-      update: {},
+      create: { testId, groupId, startsAt: startsAt ?? null, endsAt: endsAt ?? null },
+      update: { startsAt: startsAt ?? null, endsAt: endsAt ?? null },
     });
 
-    // Deadline qo'shish
-    if (endsAt) {
-      await this.prisma.deadline.create({
-        data: { testId, groupId, endsAt },
-      });
+    return { success: true, message: 'Test guruhga ochildi' };
+  }
+
+  // ─── Testni guruhdan yopish ──────────────────────────────────────────────────
+  async closeForGroup(testId: number, groupId: number) {
+    await this.prisma.testGroup.deleteMany({ where: { testId, groupId } });
+    return { success: true, message: 'Test guruhdan yopildi' };
+  }
+
+  // ─── Guruh testlari (student uchun): qulf holati bilan ───────────────────────
+  async getGroupTests(userId: number) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user?.groupId) return { groupId: null, tests: [] };
+
+    const testGroups = await this.prisma.testGroup.findMany({
+      where: { groupId: user.groupId, test: { type: 'TOPIC', isActive: true } },
+      include: {
+        test: {
+          select: { id: true, title: true, totalQ: true, duration: true, type: true },
+        },
+      },
+      orderBy: { openedAt: 'asc' },
+    });
+
+    const testIds = testGroups.map((tg) => tg.testId);
+    const attempts = await this.prisma.attempt.findMany({
+      where: { userId, testId: { in: testIds } },
+      select: { id: true, testId: true, status: true, score: true, startedAt: true },
+    });
+    const attemptMap = new Map<number, (typeof attempts)[number]>();
+    for (const a of attempts) {
+      // eng so'nggi urinishni saqlaymiz
+      const prev = attemptMap.get(a.testId);
+      if (!prev || a.startedAt > prev.startedAt) attemptMap.set(a.testId, a);
     }
 
-    return { success: true, message: 'Test guruhga ochildi' };
+    const now = new Date();
+    return {
+      groupId: user.groupId,
+      tests: testGroups.map((tg) => {
+        const attempt = attemptMap.get(tg.testId) || null;
+        let status: 'LOCKED' | 'OPEN' | 'CLOSED' | 'DONE' = 'OPEN';
+        if (tg.startsAt && now < tg.startsAt) status = 'LOCKED';
+        else if (tg.endsAt && now > tg.endsAt) status = 'CLOSED';
+        if (attempt && attempt.status !== 'IN_PROGRESS') status = 'DONE';
+
+        return {
+          testId: tg.testId,
+          title: tg.test.title,
+          totalQ: tg.test.totalQ,
+          duration: tg.test.duration || 90,
+          startsAt: tg.startsAt,
+          endsAt: tg.endsAt,
+          status,
+          attemptId: attempt?.id ?? null,
+          attemptStatus: attempt?.status ?? null,
+          score: attempt?.score ?? null,
+        };
+      }),
+    };
+  }
+
+  // ─── Guruh testlari (kurator/admin uchun): biriktirilgan guruhlar ────────────
+  async getTestGroupWindows(testId: number) {
+    await this.ensureExists(testId);
+    return this.prisma.testGroup.findMany({
+      where: { testId },
+      include: { group: { select: { id: true, name: true } } },
+      orderBy: { openedAt: 'asc' },
+    });
   }
 
   // ─── Statistika (admin dashboard) ───────────────────────────────────────────

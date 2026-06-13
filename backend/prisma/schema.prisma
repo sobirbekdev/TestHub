@@ -15,13 +15,14 @@ model User {
   name             String?
   role             Role     @default(STUDENT)
   groupId          Int?
-  group            Group?   @relation(fields: [groupId], references: [id])
+  group            Group?   @relation("GroupMembers", fields: [groupId], references: [id])
   telegramId       BigInt?  @unique
   telegramUsername String?
   createdAt        DateTime @default(now())
 
-  attempts    Attempt[]
-  payments    Payment[]
+  attempts      Attempt[]
+  payments      Payment[]
+  curatedGroups Group[]   @relation("CuratorGroups")
 
   @@map("users")
 }
@@ -49,9 +50,11 @@ model OtpCode {
 model Group {
   id        Int      @id @default(autoincrement())
   name      String
+  curatorId Int?
+  curator   User?    @relation("CuratorGroups", fields: [curatorId], references: [id])
   createdAt DateTime @default(now())
 
-  users     User[]
+  users      User[]      @relation("GroupMembers")
   testGroups TestGroup[]
 
   @@map("groups")
@@ -100,6 +103,8 @@ model TestGroup {
   test      Test     @relation(fields: [testId], references: [id])
   group     Group    @relation(fields: [groupId], references: [id])
   openedAt  DateTime @default(now())
+  startsAt  DateTime?
+  endsAt    DateTime?
 
   @@unique([testId, groupId])
   @@map("test_groups")

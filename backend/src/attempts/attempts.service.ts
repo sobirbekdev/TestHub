@@ -32,6 +32,32 @@ export class AttemptsService {
       if (!payment) throw new ForbiddenException("Avval to'lov qiling");
     }
 
+    // Guruh (TOPIC) testi — oyna + bir martalik tekshiruvi (adminlar uchun ham emas)
+    if (test.type === 'TOPIC' && user?.groupId && !isAdmin) {
+      const tg = await this.prisma.testGroup.findUnique({
+        where: { testId_groupId: { testId: dto.testId, groupId: user.groupId } },
+      });
+      if (tg) {
+        const now = new Date();
+        if (tg.startsAt && now < tg.startsAt) {
+          throw new ForbiddenException('Test hali ochilmagan');
+        }
+        if (tg.endsAt && now > tg.endsAt) {
+          throw new ForbiddenException('Test vaqti tugagan');
+        }
+        // Bu oynada allaqachon ishlagan bo'lsa — qayta ishlash mumkin emas
+        const done = await this.prisma.attempt.findFirst({
+          where: {
+            userId,
+            testId: dto.testId,
+            status: { not: 'IN_PROGRESS' },
+            ...(tg.startsAt && { startedAt: { gte: tg.startsAt } }),
+          },
+        });
+        if (done) throw new ForbiddenException('Bu testni allaqachon ishlagansiz');
+      }
+    }
+
     const existing = await this.prisma.attempt.findFirst({
       where: { userId, testId: dto.testId, status: 'IN_PROGRESS' },
     });
@@ -54,6 +80,11 @@ export class AttemptsService {
     if (attempt.status !== 'IN_PROGRESS') {
       return attempt;
     }
+
+    // Vaqt chegarasi (taymer): test.duration daqiqa (default 90)
+    const limitMin = attempt.test.duration || 90;
+    const elapsedMs = Date.now() - new Date(attempt.startedAt).getTime();
+    (attempt as any).__timedOut = elapsedMs > limitMin * 60 * 1000;
 
     const testType = attempt.test.type;
     const isImageBased =
@@ -166,7 +197,7 @@ export class AttemptsService {
     const updated = await this.prisma.attempt.update({
       where: { id: attemptId },
       data: {
-        status: 'COMPLETED',
+        status: attempt.__timedOut ? 'TIMED_OUT' : 'COMPLETED',
         finishedAt: new Date(),
         score: Math.round(scorePercent * 10) / 10,
         totalScore: totalScored,
@@ -256,7 +287,7 @@ export class AttemptsService {
     return this.prisma.attempt.update({
       where: { id: attemptId },
       data: {
-        status: 'COMPLETED',
+        status: attempt.__timedOut ? 'TIMED_OUT' : 'COMPLETED',
         finishedAt: new Date(),
         score: Math.round(score * 10) / 10,
       },

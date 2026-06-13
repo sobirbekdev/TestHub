@@ -42,6 +42,13 @@ export class TestsController {
     return this.testsService.getDtmYears();
   }
 
+  // GET /api/tests/group — student: o'z guruhi testlari (qulf holati bilan)
+  // ⚠️ :id dan OLDIN turishi shart!
+  @Get('group')
+  getGroupTests(@CurrentUser() user: any) {
+    return this.testsService.getGroupTests(user.id);
+  }
+
   // GET /api/tests/:id/info — to'lov tekshiruvisiz asosiy ma'lumot (JWT kerak emas)
   // Bu route JwtAuthGuard dan oldin turishi uchun alohida import kerak emas
   @Get(':id/info')
@@ -143,18 +150,38 @@ export class TestsController {
     return this.testsService.deleteTestQuestion(id, orderNo);
   }
 
-  // POST /api/tests/:id/open-group — guruhga ochish
+  // POST /api/tests/:id/open-group — guruhga ochish (boshlanish + tugash oynasi)
   @Post(':id/open-group')
   @UseGuards(RolesGuard)
   @Roles('SUPER_ADMIN', 'TEACHER', 'CURATOR')
   openForGroup(
     @Param('id', ParseIntPipe) testId: number,
-    @Body() body: { groupId: number; endsAt?: string },
+    @Body() body: { groupId: number; startsAt?: string; endsAt?: string },
   ) {
     return this.testsService.openForGroup(
       testId,
       body.groupId,
+      body.startsAt ? new Date(body.startsAt) : undefined,
       body.endsAt ? new Date(body.endsAt) : undefined,
     );
+  }
+
+  // POST /api/tests/:id/close-group — guruhdan yopish
+  @Post(':id/close-group')
+  @UseGuards(RolesGuard)
+  @Roles('SUPER_ADMIN', 'TEACHER', 'CURATOR')
+  closeForGroup(
+    @Param('id', ParseIntPipe) testId: number,
+    @Body() body: { groupId: number },
+  ) {
+    return this.testsService.closeForGroup(testId, body.groupId);
+  }
+
+  // GET /api/tests/:id/groups — testga biriktirilgan guruhlar (kurator/admin)
+  @Get(':id/groups')
+  @UseGuards(RolesGuard)
+  @Roles('SUPER_ADMIN', 'TEACHER', 'CURATOR')
+  getTestGroupWindows(@Param('id', ParseIntPipe) id: number) {
+    return this.testsService.getTestGroupWindows(id);
   }
 }
