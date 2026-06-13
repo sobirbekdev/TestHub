@@ -4,7 +4,7 @@ name: Keep Render backend awake
 # Bu workflow har 10 daqiqada /health ga ping yuborib serverni "uyg'oq" tutadi.
 on:
   schedule:
-    - cron: '*/10 * * * *' # har 10 daqiqada
+    - cron: '*/5 * * * *' # har 5 daqiqada (public repo — daqiqalar cheksiz)
   workflow_dispatch: {} # qo'lda ishga tushirish uchun
 
 jobs:
