@@ -190,11 +190,10 @@ To'g'ri javob: "${correctAnswer}"
 Rasmdagi talaba javobini yuqoridagi to'g'ri javob bilan solishtiring.
 - Agar javob to'liq to'g'ri bo'lsa: BALL: ${maxScore}
 - Agar qisman to'g'ri bo'lsa: BALL: ${Math.round(maxScore / 2)}
-- Agar noto'g'ri yoki bo'sh bo'lsa: BALL: 0
+- Agar noto'g'ri yoki bo'sh bo'lsa: 0
 
-Faqat quyidagi formatda javob bering:
-BALL: [son]
-IZOH: [1 qator izoh]`;
+MUHIM: Javobni FAQAT quyidagi JSON ko'rinishida bering, boshqa hech narsa yozmang:
+{"ball": <0 dan ${maxScore} gacha son>, "izoh": "<1 qator izoh>"}`;
 
       const body = {
         contents: [{
@@ -242,9 +241,8 @@ Ball berish (0 dan ${maxScore} gacha, QISMAN ball bering):
 
 Talaba harakat qilgan bo'lsa, hatto qisman to'g'ri bo'lsa ham mos ravishda ball bering.
 
-Faqat quyidagi formatda javob bering:
-BALL: [0-${maxScore} oralig'idagi son]
-IZOH: [1-2 qator izoh — nima to'g'ri, nima xato]`;
+MUHIM: Javobni FAQAT quyidagi JSON ko'rinishida bering, boshqa hech narsa yozmang:
+{"ball": <0 dan ${maxScore} gacha son>, "izoh": "<1-2 qator izoh — nima to'g'ri, nima xato>"}`;
 
     try {
       const images = questionImageUrl
@@ -277,10 +275,16 @@ IZOH: [1-2 qator izoh — nima to'g'ri, nima xato]`;
 
   // Admin: qayta yuborish
   async recheck(answerId: number) {
-    return this.prisma.answer.update({
+    // Ballni tozalab PENDING ga qaytaramiz, so'ng AI ni qaytadan ishga tushiramiz
+    const ans = await this.prisma.answer.update({
       where: { id: answerId },
-      data: { aiStatus: 'RECHECK' },
+      data: { aiScore: null, aiComment: null, aiStatus: 'PENDING' },
     });
+    // Fire-and-forget: shu urinishdagi barcha PENDING javoblarni qayta baholaydi
+    this.checkAttemptAiAnswers(ans.attemptId).catch((e) =>
+      this.logger.error(`recheck qayta baholash xatosi: ${e.message}`),
+    );
+    return ans;
   }
 
   // Admin: AI tekshiruv holatlari ro'yxati
@@ -342,29 +346,57 @@ IZOH: [1-2 qator izoh — nima to'g'ri, nima xato]`;
       return `Kimyo o'qituvchisi sifatida ushbu rasmni baholang.
 Savol: ${questionText}
 Talaba barcha reaksiya tenglamalarini bitta qog'ozga yozgan.
-Quyidagi formatda javob bering:
-BALL: [0-100 oralig'ida son]
-IZOH: [qisqa baholash izohi]`;
+MUHIM: Javobni FAQAT quyidagi JSON ko'rinishida bering, boshqa hech narsa yozmang:
+{"ball": <0-100 oralig'ida son>, "izoh": "<qisqa baholash izohi>"}`;
     }
     return `Kimyo o'qituvchisi sifatida ushbu rasmni baholang.
 Savol: ${questionText}
 Talaba o'z javobini rasmda yozgan.
-Quyidagi formatda javob bering:
-BALL: [0-100 oralig'ida son]
-IZOH: [qisqa baholash izohi]`;
+MUHIM: Javobni FAQAT quyidagi JSON ko'rinishida bering, boshqa hech narsa yozmang:
+{"ball": <0-100 oralig'ida son>, "izoh": "<qisqa baholash izohi>"}`;
   }
 
   private parseGeminiResponse(text: string): GeminiResult {
-    const scoreMatch = text.match(/BALL:\s*(\d+)/);
-    const commentMatch = text.match(/IZOH:\s*(.+)/);
+    let score: number | null = null;
+    let comment = '';
 
-    const score = scoreMatch ? parseInt(scoreMatch[1]) : 0;
-    const comment = commentMatch ? commentMatch[1].trim() : text;
+    // 1) JSON ko'rinishini sinaymiz (```json ... ``` bloklarini ham qamrab olamiz)
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      try {
+        const obj = JSON.parse(jsonMatch[0]);
+        const rawBall = obj.ball ?? obj.score ?? obj.BALL;
+        const rawIzoh = obj.izoh ?? obj.comment ?? obj.IZOH;
+        if (rawBall !== undefined && rawBall !== null) {
+          const n = parseFloat(String(rawBall).replace(',', '.'));
+          if (!isNaN(n)) score = n;
+        }
+        if (rawIzoh) comment = String(rawIzoh).trim();
+      } catch {
+        /* JSON buzuq — pastdagi regex'ga o'tamiz */
+      }
+    }
 
+    // 2) Markdown'siz matn ustida regex (BALL/BAHO/SCORE, kasr yoki o'nlik son)
+    const clean = text.replace(/[*_`#]/g, '');
+    if (score === null) {
+      const m =
+        clean.match(/(?:BALL|BAHO|SCORE|Ball)\s*[:\-=]?\s*(\d+(?:[.,]\d+)?)/i) ||
+        clean.match(/(\d+(?:[.,]\d+)?)\s*(?:ball|balldan|\/)/i);
+      if (m) score = parseFloat(m[1].replace(',', '.'));
+    }
+    if (!comment) {
+      const c = clean.match(/IZOH\s*[:\-]?\s*([\s\S]+)/i);
+      comment = c
+        ? c[1].trim()
+        : clean.replace(/(?:BALL|BAHO|SCORE)\s*[:\-=]?\s*\d+(?:[.,]\d+)?/i, '').trim();
+    }
+
+    const finalScore = score ?? 0;
     const status: GeminiResult['status'] =
-      score >= 85 ? 'CORRECT' : score >= 40 ? 'PARTIAL' : 'WRONG';
+      finalScore >= 85 ? 'CORRECT' : finalScore >= 40 ? 'PARTIAL' : 'WRONG';
 
-    return { score, comment, status };
+    return { score: finalScore, comment: comment || text, status };
   }
 
   private async urlToBase64(url: string): Promise<string> {
