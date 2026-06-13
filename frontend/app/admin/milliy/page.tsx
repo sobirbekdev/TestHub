@@ -487,8 +487,10 @@ export default function MilliyPage() {
                   try {
                     await api.patch(`/tests/${selectedTest.id}`, { telegramId: val });
                     setSelectedTest(p => p ? { ...p, telegramId: val ?? undefined } : p);
-                    setTests(p => p.map(t => t.id === selectedTest.id ? { ...t, telegramId: val ?? undefined } : t));
-                    toast.success('Telegram ID saqlandi!');
+                    // ID o'zgarsa videolar ham ko'chadi (swap) — ro'yxat va videolarni yangilaymiz
+                    await loadTests();
+                    await loadQuestions(selectedTest.id);
+                    toast.success('Telegram ID saqlandi! Videolar ham yangilandi.');
                   } catch (err: any) { toast.error(err.response?.data?.message || 'Xatolik'); }
                 }}
               />
