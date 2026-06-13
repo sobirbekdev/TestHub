@@ -24,6 +24,7 @@ export default function AdminGroupTestsPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [pending, setPending] = useState<Record<number, { id: number; name: string | null; phone: string }[]>>({});
 
   useEffect(() => {
     Promise.all([api.get('/tests?type=TOPIC'), api.get('/groups')])
@@ -55,6 +56,27 @@ export default function AdminGroupTestsPage() {
       toast.error(e.response?.data?.message || 'Xatolik');
     }
     setSaving(false);
+  };
+
+  const loadPending = async (gId: number) => {
+    if (!testId) return;
+    if (pending[gId]) {
+      setPending((p) => { const n = { ...p }; delete n[gId]; return n; });
+      return;
+    }
+    try {
+      const { data } = await api.get(`/telegram/non-completers/${testId}/${gId}`);
+      setPending((p) => ({ ...p, [gId]: data }));
+    } catch { toast.error('Xatolik'); }
+  };
+
+  const notify = async (gId: number) => {
+    if (!testId) return;
+    try {
+      const { data } = await api.post('/telegram/notify-curator', { testId, groupId: gId });
+      if (data.ok) toast.success(`Kuratorga yuborildi (${data.count} kishi)`);
+      else toast.error(data.message || 'Yuborilmadi');
+    } catch (e: any) { toast.error(e.response?.data?.message || 'Xatolik'); }
   };
 
   const close = async (gId: number) => {
@@ -147,17 +169,47 @@ export default function AdminGroupTestsPage() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {assignments.map((a) => (
-                  <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', backgroundColor: theme.input, borderRadius: 10 }}>
-                    <div>
-                      <p style={{ color: theme.text, fontWeight: 600, fontSize: 14 }}>{a.group.name}</p>
-                      <p style={{ color: theme.text, opacity: 0.5, fontSize: 12, marginTop: 2 }}>
-                        🔓 {fmt(a.startsAt)} → ⏳ {fmt(a.endsAt)}
-                      </p>
+                  <div key={a.id} style={{ padding: '10px 12px', backgroundColor: theme.input, borderRadius: 10 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <p style={{ color: theme.text, fontWeight: 600, fontSize: 14 }}>{a.group.name}</p>
+                        <p style={{ color: theme.text, opacity: 0.5, fontSize: 12, marginTop: 2 }}>
+                          🔓 {fmt(a.startsAt)} → ⏳ {fmt(a.endsAt)}
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button onClick={() => loadPending(a.groupId)}
+                          style={{ padding: '6px 10px', backgroundColor: `${theme.accent}20`, color: theme.accent, borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12 }}>
+                          {pending[a.groupId] ? 'Yashirish' : 'Ishlamaganlar'}
+                        </button>
+                        <button onClick={() => notify(a.groupId)}
+                          style={{ padding: '6px 10px', backgroundColor: '#10b98120', color: '#10b981', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12 }}>
+                          📨 Kuratorga
+                        </button>
+                        <button onClick={() => close(a.groupId)}
+                          style={{ padding: '6px 10px', backgroundColor: '#ef444420', color: '#ef4444', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12 }}>
+                          Yopish
+                        </button>
+                      </div>
                     </div>
-                    <button onClick={() => close(a.groupId)}
-                      style={{ padding: '6px 12px', backgroundColor: '#ef444420', color: '#ef4444', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13 }}>
-                      Yopish
-                    </button>
+                    {pending[a.groupId] && (
+                      <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${theme.border}` }}>
+                        {pending[a.groupId].length === 0 ? (
+                          <p style={{ color: '#10b981', fontSize: 13 }}>✅ Barcha a'zolar ishlagan</p>
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            <p style={{ color: theme.text, opacity: 0.6, fontSize: 12, marginBottom: 4 }}>
+                              Ishlamaganlar ({pending[a.groupId].length}):
+                            </p>
+                            {pending[a.groupId].map((u, i) => (
+                              <p key={u.id} style={{ color: theme.text, fontSize: 13 }}>
+                                {i + 1}. {u.name || u.phone}
+                              </p>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

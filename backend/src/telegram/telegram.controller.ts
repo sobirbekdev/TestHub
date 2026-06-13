@@ -73,4 +73,23 @@ export class TelegramController {
   getUpdates() {
     return this.telegramService.getRecentUpdates();
   }
+
+  // Guruhda testni ishlamaganlar ro'yxati
+  @Get('non-completers/:testId/:groupId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'TEACHER', 'CURATOR')
+  getNonCompleters(
+    @Param('testId', ParseIntPipe) testId: number,
+    @Param('groupId', ParseIntPipe) groupId: number,
+  ) {
+    return this.telegramService.getNonCompleters(testId, groupId);
+  }
+
+  // Kuratorga ishlamaganlar ro'yxatini yuborish
+  @Post('notify-curator')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'TEACHER', 'CURATOR')
+  notifyCurator(@Body() body: { testId: number; groupId: number }) {
+    return this.telegramService.notifyCurator(body.testId, body.groupId);
+  }
 }

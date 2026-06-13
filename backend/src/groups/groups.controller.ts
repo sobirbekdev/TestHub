@@ -27,6 +27,13 @@ export class GroupsController {
     return this.groupsService.update(id, body.name);
   }
 
+  @Patch(':id/curator')
+  @UseGuards(RolesGuard)
+  @Roles('SUPER_ADMIN', 'TEACHER')
+  setCurator(@Param('id', ParseIntPipe) id: number, @Body() body: { curatorId: number | null }) {
+    return this.groupsService.setCurator(id, body.curatorId ?? null);
+  }
+
   @Delete(':id')
   @UseGuards(RolesGuard)
   @Roles('SUPER_ADMIN')

@@ -280,6 +280,48 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
+  // ─── Guruhda testni ishlamaganlar ro'yxati ──────────────────────────────────
+  async getNonCompleters(testId: number, groupId: number) {
+    const members = await this.prisma.user.findMany({
+      where: { groupId },
+      select: { id: true, name: true, phone: true },
+      orderBy: { name: 'asc' },
+    });
+    const completed = await this.prisma.attempt.findMany({
+      where: { testId, status: { not: 'IN_PROGRESS' }, user: { groupId } },
+      select: { userId: true },
+    });
+    const doneSet = new Set(completed.map((a) => a.userId));
+    return members.filter((m) => !doneSet.has(m.id));
+  }
+
+  // ─── Kuratorga ishlamaganlar ro'yxatini yuborish ────────────────────────────
+  async notifyCurator(testId: number, groupId: number) {
+    const [test, group] = await Promise.all([
+      this.prisma.test.findUnique({ where: { id: testId }, select: { title: true } }),
+      this.prisma.group.findUnique({
+        where: { id: groupId },
+        select: { name: true, curatorId: true, curator: { select: { telegramId: true } } },
+      }),
+    ]);
+    if (!group) return { ok: false, message: 'Guruh topilmadi' };
+    if (!group.curator?.telegramId) {
+      return { ok: false, message: 'Kurator Telegram bilan bog\'lanmagan' };
+    }
+
+    const pending = await this.getNonCompleters(testId, groupId);
+    const lines = pending.length
+      ? pending.map((u, i) => `${i + 1}. ${u.name || u.phone}`).join('\n')
+      : '✅ Barcha a\'zolar testni ishladi!';
+
+    const text =
+      `📋 «${test?.title || 'Test'}» — ${group.name}\n\n` +
+      `Ishlamaganlar (${pending.length}):\n${lines}`;
+
+    await this.sendMessage(Number(group.curator.telegramId), text);
+    return { ok: true, count: pending.length };
+  }
+
   // Oddiy matnli xabar
   async sendMessage(chatId: number, text: string) {
     try {

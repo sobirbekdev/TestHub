@@ -7,7 +7,10 @@ export class GroupsService {
 
   async findAll() {
     return this.prisma.group.findMany({
-      include: { _count: { select: { users: true } } },
+      include: {
+        _count: { select: { users: true } },
+        curator: { select: { id: true, name: true, phone: true } },
+      },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -32,6 +35,10 @@ export class GroupsService {
 
   async update(id: number, name: string) {
     return this.prisma.group.update({ where: { id }, data: { name } });
+  }
+
+  async setCurator(id: number, curatorId: number | null) {
+    return this.prisma.group.update({ where: { id }, data: { curatorId } });
   }
 
   async remove(id: number) {

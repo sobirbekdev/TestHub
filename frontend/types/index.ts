@@ -95,5 +95,7 @@ export interface LeaderboardEntry {
 export interface Group {
   id: number;
   name: string;
+  curatorId?: number | null;
+  curator?: { id: number; name: string | null; phone: string } | null;
   _count?: { users: number };
 }

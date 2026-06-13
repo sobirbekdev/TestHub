@@ -236,6 +236,30 @@ export default function ResultPage() {
           </button>
         </div>
 
+        {/* ── Fidbek / motivatsiya ── */}
+        {(() => {
+          const fb = score >= 85
+            ? { icon: '🏆', color: '#10b981', title: 'Zo\'r natija!', text: 'Ajoyib ishladingiz. Shu zaylda davom eting — siz eng kuchlilar qatoridasiz!' }
+            : score >= 70
+              ? { icon: '👏', color: '#10b981', title: 'Yaxshi!', text: 'Yaxshi natija. Yana bir oz mehnat bilan a\'lo darajaga chiqasiz!' }
+              : score >= 50
+                ? { icon: '💪', color: '#f59e0b', title: 'Yomon emas', text: 'O\'rtacha natija. Xatolaringizni video yechimlar orqali ko\'rib chiqing va yana urinib ko\'ring!' }
+                : { icon: '🌱', color: '#ef4444', title: 'Tushkunlikka tushmang!', text: 'Har bir xato — o\'rganish imkoniyati. Video yechimlarni ko\'ring, mavzuni qayta o\'qing. Siz albatta uddalaysiz!' };
+          return (
+            <div style={{
+              backgroundColor: `${fb.color}12`, border: `1px solid ${fb.color}40`,
+              borderRadius: 16, padding: '16px 20px', marginBottom: 16,
+              display: 'flex', alignItems: 'center', gap: 14,
+            }}>
+              <div style={{ fontSize: 34, flexShrink: 0 }}>{fb.icon}</div>
+              <div>
+                <p style={{ color: fb.color, fontWeight: 700, fontSize: 15, margin: 0 }}>{fb.title}</p>
+                <p style={{ color: theme.text, opacity: 0.7, fontSize: 13, marginTop: 3 }}>{fb.text}</p>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* ── Savol tugmalari gridi ── */}
         <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: 18, padding: 20, marginBottom: 16 }}>
           <p style={{ color: theme.text, fontWeight: 600, marginBottom: 12 }}>
