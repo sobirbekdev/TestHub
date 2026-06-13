@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npx prisma *)",
+      "Bash(npm --version)",
+      "Bash(ls node_modules/.prisma)",
+      "Bash(psql --version)",
+      "Bash(cat .env)",
+      "Bash(export PATH=\"/Library/PostgreSQL/18/bin:$PATH\")",
+      "Bash(psql -U postgres -c \"CREATE DATABASE testhub;\")",
+      "Bash(psql -U sobirbek -d testhub -c \"\\\\dt\")",
+      "Bash(PGPASSWORD=\"sobirbek123\" psql -U sobirbek -d testhub -c \"\\\\dt\")",
+      "Bash(npm run *)",
+      "Bash(NODE_ENV=development node dist/main.js)",
+      "Bash(curl -s http://localhost:4000/api/auth/send-otp -H 'Content-Type: application/json' -d '{\"phone\":\"+998901234567\"}')",
+      "Bash(curl -s http://localhost:4000/api/auth/verify-otp -H 'Content-Type: application/json' -d '{\"phone\":\"+998901234567\",\"code\":\"645427\"}')",
+      "Bash(npx create-next-app@latest frontend --typescript --tailwind --app --no-eslint --no-src-dir --import-alias \"@/*\")",
+      "Bash(mkdir -p \"/Users/sobirbek/files/frontend/app/test/[attemptId]\")",
+      "Bash(grep -v \"^$\")",
+      "Bash(psql -U sobirbek -d testhub -c ' *)",
+      "Bash(PGPASSWORD=sobirbek123 psql -U sobirbek -d testhub -h localhost -c ' *)",
+      "Bash(pkill -f \"node dist/main.js\")",
+      "Bash(pkill -f \"next\")",
+      "Bash(curl -s http://localhost:4000/api/tests?type=NATIONAL_CERT -H \"Authorization: Bearer test\")",
+      "Bash(echo \"Backend PID: $!\")",
+      "Bash(sleep 2 && cat /tmp/backend.log | tail -10)",
+      "Bash(node .next/standalone/server.js)",
+      "Bash(curl -s http://localhost:3000)",
+      "Bash(curl -s -X POST http://localhost:4000/api/auth/verify-otp -H 'Content-Type: application/json' -d '{\"phone\":\"+998701224402\",\"code\":\"1111\"}')",
+      "Bash(python3 -m json.tool)",
+      "Bash(pkill -f \"standalone/server.js\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/login)",
+      "Bash(curl -s -X POST http://localhost:4000/api/auth/send-otp -H 'Content-Type: application/json' -d '{\"phone\":\"+998701224402\"}')",
+      "Bash(cp -r .next/static .next/standalone/.next/static)",
+      "Bash(cp -r public .next/standalone/public)",
+      "Bash(NEXT_PUBLIC_API_URL=http://localhost:4000/api node .next/standalone/server.js)"
+    ]
+  }
+}

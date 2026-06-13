@@ -1,0 +1,271 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── FOYDALANUVCHI ───────────────────────────────────────────────────────────
+
+model User {
+  id          Int      @id @default(autoincrement())
+  phone       String   @unique
+  name        String?
+  role        Role     @default(STUDENT)
+  groupId     Int?
+  group       Group?   @relation(fields: [groupId], references: [id])
+  createdAt   DateTime @default(now())
+
+  attempts    Attempt[]
+  payments    Payment[]
+
+  @@map("users")
+}
+
+enum Role {
+  SUPER_ADMIN
+  TEACHER
+  CURATOR
+  STUDENT
+}
+
+model OtpCode {
+  id        Int      @id @default(autoincrement())
+  phone     String
+  code      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("otp_codes")
+}
+
+// ─── GURUH ────────────────────────────────────────────────────────────────────
+
+model Group {
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+
+  users     User[]
+  testGroups TestGroup[]
+
+  @@map("groups")
+}
+
+// ─── TEST TURLARI ─────────────────────────────────────────────────────────────
+
+// DTM variant, Atestatsiya variant, Milliy Sertifikat, Mavzulashtirilgan
+model Test {
+  id             Int        @id @default(autoincrement())
+  type           TestType
+  title          String
+  year           Int?
+  variantNo      Int?
+  price          Int        @default(0)
+  duration       Int
+  totalQ         Int
+  isActive       Boolean    @default(true)
+  authorName     String?
+  collectionName String?    // Kitob/to'plam nomi (Aliyev Vali → "Kimyo 2024")
+  coverImage     String?    // Kitob muqova rasmi URL
+  pdfUrl         String?    // PDF fayl URL
+  telegramId     Int?       @unique // Telegram caption uchun maxsus ID (masalan 101:5)
+  createdAt      DateTime   @default(now())
+
+  questions   TestQuestion[]
+  attempts    Attempt[]
+  testGroups  TestGroup[]
+  deadlines   Deadline[]
+
+  @@map("tests")
+}
+
+enum TestType {
+  DTM_VARIANT
+  DTM_RANDOM
+  ATTESTATION
+  NATIONAL_CERT
+  TOPIC
+}
+
+model TestGroup {
+  id        Int      @id @default(autoincrement())
+  testId    Int
+  groupId   Int
+  test      Test     @relation(fields: [testId], references: [id])
+  group     Group    @relation(fields: [groupId], references: [id])
+  openedAt  DateTime @default(now())
+
+  @@unique([testId, groupId])
+  @@map("test_groups")
+}
+
+model Deadline {
+  id        Int      @id @default(autoincrement())
+  testId    Int
+  test      Test     @relation(fields: [testId], references: [id])
+  groupId   Int?
+  endsAt    DateTime
+  createdAt DateTime @default(now())
+
+  @@map("deadlines")
+}
+
+// ─── SAVOLLAR ─────────────────────────────────────────────────────────────────
+
+model Question {
+  id          Int              @id @default(autoincrement())
+  text        String
+  imageUrl    String?          // Cloudflare R2
+  difficulty  Difficulty
+  qType       QuestionType
+  orderInTest Int?             // Milliy sert. uchun tartib raqami
+  createdAt   DateTime         @default(now())
+
+  options     Option[]
+  testLinks   TestQuestion[]
+  answers     Answer[]
+
+  @@map("questions")
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum QuestionType {
+  TEXT       // yozma
+  IMAGE      // rasmli
+  GRAPH      // grafikli
+  THEORY     // nazariy
+  OPEN       // ochiq javob (36–40)
+  MULTI      // ko'p to'g'ri javob (41, 43)
+  REACTIONS  // barcha reaksiyalar (42)
+}
+
+model Option {
+  id         Int      @id @default(autoincrement())
+  questionId Int
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  label      String   // A, B, C, D, E, F
+  text       String
+  isCorrect  Boolean  @default(false)
+
+  @@map("options")
+}
+
+model TestQuestion {
+  id            Int      @id @default(autoincrement())
+  testId        Int
+  questionId    Int?
+  orderNo       Int
+  imageUrl      String?  // savol rasmi
+  questionText  String?  // savol matni (text rejim)
+  correctAnswer String?  // A,B,C,D yoki to'g'ri javob matni
+  scorePoint    Float?   // bu savol uchun ball
+  test          Test     @relation(fields: [testId], references: [id], onDelete: Cascade)
+  question      Question? @relation(fields: [questionId], references: [id])
+
+  @@unique([testId, orderNo])
+  @@map("test_questions")
+}
+
+// ─── URINISH VA JAVOBLAR ──────────────────────────────────────────────────────
+
+model Attempt {
+  id          Int           @id @default(autoincrement())
+  userId      Int
+  testId      Int
+  user        User          @relation(fields: [userId], references: [id])
+  test        Test          @relation(fields: [testId], references: [id])
+  startedAt   DateTime      @default(now())
+  finishedAt  DateTime?
+  score       Float?        // foiz
+  totalScore  Float?        // AI ball ham kiritilgan
+  status      AttemptStatus @default(IN_PROGRESS)
+
+  answers     Answer[]
+
+  @@map("attempts")
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  COMPLETED
+  TIMED_OUT
+}
+
+model Answer {
+  id           Int          @id @default(autoincrement())
+  attemptId    Int
+  questionId   Int?         // null bo'lishi mumkin (DTM/Milliy Sert uchun)
+  orderNo      Int?         // DTM/Milliy Sert: savol tartibi raqami
+  attempt      Attempt      @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question     Question?    @relation(fields: [questionId], references: [id])
+  selectedOpts String[]     // option labellar: ["A"], ["A","C"] yoki []
+  openText     String?      // ochiq javob matni (36–40)
+  imageUrl     String?      // AI uchun rasm URL (41–43)
+  aiStatus     AiStatus?
+  aiScore      Float?       // 0–100
+  aiComment    String?
+  isCorrect    Boolean?     // oddiy savollar uchun
+  scorePoint   Float?       // bu javob uchun berilgan ball (admin tomonidan)
+  createdAt    DateTime     @default(now())
+
+  @@unique([attemptId, questionId])
+  @@unique([attemptId, orderNo])
+  @@map("answers")
+}
+
+enum AiStatus {
+  PENDING
+  CONFIRMED
+  RECHECK
+  MANUAL
+}
+
+// ─── VIDEO (TELEGRAM) ─────────────────────────────────────────────────────────
+
+model VideoSolution {
+  id         Int      @id @default(autoincrement())
+  testId     Int
+  questionNo Int      // test ichidagi savol raqami
+  fileId     String   // Telegram file_id
+  createdAt  DateTime @default(now())
+
+  @@unique([testId, questionNo])
+  @@map("video_solutions")
+}
+
+// ─── TO'LOV ───────────────────────────────────────────────────────────────────
+
+model Payment {
+  id         Int           @id @default(autoincrement())
+  userId     Int
+  testId     Int?
+  user       User          @relation(fields: [userId], references: [id])
+  amount     Int           // so'm
+  provider   PayProvider
+  status     PayStatus     @default(PENDING)
+  externalId String?       // Click/Payme tranzaksiya ID
+  createdAt  DateTime      @default(now())
+
+  @@map("payments")
+}
+
+enum PayProvider {
+  CLICK
+  PAYME
+}
+
+enum PayStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}

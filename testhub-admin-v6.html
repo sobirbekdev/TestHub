@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TestHub — Admin Panel</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+  :root {
+    --bg:#0f1117; --surface:#1a1d27; --surface2:#222536; --border:#2d3148;
+    --text:#e8eaf0; --muted:#7c82a0; --accent:#5b6bff; --accent2:#00c9a7;
+    --warn:#f59e0b; --danger:#ef4444; --success:#22c55e;
+    --sidebar:240px; --radius:12px; --radius-sm:8px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;}
+
+  /* SIDEBAR */
+  .sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;overflow-y:auto;z-index:100;}
+  .sidebar-logo{padding:20px 18px;border-bottom:1px solid var(--border);}
+  .sidebar-logo .logo{font-size:20px;font-weight:700;background:linear-gradient(135deg,#5b6bff,#00c9a7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .sidebar-logo .sub{font-size:11px;color:var(--muted);margin-top:2px;}
+  .nav-section{padding:14px 10px 6px;font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.8px;text-transform:uppercase;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:var(--radius-sm);margin:1px 6px;cursor:pointer;font-size:13px;color:var(--muted);transition:all .2s;}
+  .nav-item:hover{background:var(--surface2);color:var(--text);}
+  .nav-item.active{background:var(--accent);color:#fff;font-weight:600;}
+  .nav-item .icon{font-size:16px;width:22px;text-align:center;flex-shrink:0;}
+  .nav-badge{margin-left:auto;background:#ef4444;color:#fff;font-size:10px;padding:2px 7px;border-radius:20px;font-weight:700;}
+  .nav-badge.warn{background:var(--warn);color:#000;}
+
+  /* MAIN */
+  .main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;}
+  .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+  .topbar-title{font-size:16px;font-weight:700;}
+  .topbar-right{display:flex;align-items:center;gap:12px;}
+  .avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;}
+  .content{padding:24px;flex:1;display:none;}
+  .content.active{display:block;}
+
+  /* CARDS */
+  .stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px;}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+  .stat-card .num{font-size:26px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+  .stat-card .lbl{font-size:11px;color:var(--muted);margin-top:4px;}
+  .stat-card .trend{font-size:11px;margin-top:6px;}
+  .stat-card .trend.up{color:var(--success);}
+  .stat-card .trend.down{color:var(--danger);}
+
+  .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .section-header h3{font-size:15px;font-weight:700;}
+  .btn{padding:8px 16px;border-radius:var(--radius-sm);border:none;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-success{background:var(--success);color:#fff;}
+  .btn-warn{background:var(--warn);color:#000;}
+  .btn-danger{background:var(--danger);color:#fff;}
+  .btn-outline{background:transparent;border:1px solid var(--border);color:var(--text);}
+  .btn-sm{padding:5px 12px;font-size:12px;}
+  .btn-xs{padding:3px 9px;font-size:11px;border-radius:6px;}
+
+  /* TABLE */
+  .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  table{width:100%;border-collapse:collapse;}
+  thead tr{background:var(--surface2);}
+  th{padding:10px 16px;text-align:left;font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px;}
+  td{padding:12px 16px;font-size:13px;border-top:1px solid var(--border);}
+  tr:hover td{background:var(--surface2);}
+  .badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;}
+  .badge-free{background:#052e16;color:#4ade80;}
+  .badge-paid{background:#1e1b4b;color:#818cf8;}
+  .badge-active{background:#052e16;color:#4ade80;}
+  .badge-closed{background:#2d0a0a;color:#f87171;}
+  .badge-pending{background:#2d1a00;color:#fbbf24;}
+  .badge-dtm{background:#2d0a0a;color:#f87171;}
+  .badge-sert{background:#052e16;color:#4ade80;}
+  .badge-ates{background:#0a1628;color:#60a5fa;}
+  .badge-topic{background:#1a0a2e;color:#a78bfa;}
+  .btn-group{display:flex;gap:6px;}
+
+  /* TAB SYSTEM */
+  .tabs{display:flex;gap:6px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:0;}
+  .tab{padding:9px 18px;border-radius:var(--radius-sm) var(--radius-sm) 0 0;border:1px solid transparent;background:transparent;color:var(--muted);font-size:13px;cursor:pointer;font-family:inherit;transition:all .2s;margin-bottom:-1px;}
+  .tab.active{background:var(--surface);border-color:var(--border);border-bottom-color:var(--surface);color:var(--text);font-weight:600;}
+  .tab-content{display:none;}
+  .tab-content.active{display:block;}
+
+  /* MODAL */
+  .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#00000080;z-index:200;display:none;align-items:center;justify-content:center;}
+  .modal-overlay.show{display:flex;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;width:520px;max-height:90vh;overflow-y:auto;}
+  .modal h3{font-size:16px;font-weight:700;margin-bottom:20px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:500;}
+  .field input, .field select, .field textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 13px;color:var(--text);font-size:13px;font-family:inherit;outline:none;transition:border-color .2s;}
+  .field input:focus, .field select:focus{border-color:var(--accent);}
+  .field textarea{resize:vertical;min-height:80px;}
+  .field select option{background:var(--bg);}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+  .modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);}
+  .step-indicator{display:flex;gap:8px;margin-bottom:20px;}
+  .step{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--border);color:var(--muted);}
+  .step.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .step.done{background:#052e16;border-color:#22c55e;color:#4ade80;}
+
+  /* SAVOL BAZA */
+  .qdb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px;}
+  .qdb-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+  .qdb-card h4{font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+  .qdb-type-row{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--surface2);border-radius:var(--radius-sm);margin-bottom:6px;cursor:pointer;transition:all .2s;}
+  .qdb-type-row:hover{border:1px solid var(--border);}
+  .qdb-type-row .type-name{font-size:12px;font-weight:600;}
+  .qdb-type-row .type-count{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;}
+  .qdb-total{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border);margin-top:8px;}
+  .qdb-total span{font-size:11px;color:var(--muted);}
+  .qdb-total strong{font-family:'JetBrains Mono',monospace;font-size:16px;}
+
+  /* AI PANEL */
+  .ai-queue{display:flex;flex-direction:column;gap:10px;}
+  .ai-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+  .ai-card-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;}
+  .ai-thumb{width:60px;height:60px;border-radius:8px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;}
+  .ai-card-info h4{font-size:14px;font-weight:600;margin-bottom:4px;}
+  .ai-card-info p{font-size:12px;color:var(--muted);}
+  .ai-score-row{display:flex;gap:8px;margin-top:8px;}
+  .ai-sub{background:var(--surface2);border-radius:6px;padding:6px 10px;font-size:12px;}
+  .ai-sub .s-lbl{color:var(--muted);margin-bottom:2px;}
+  .ai-sub .s-val{font-weight:700;font-family:'JetBrains Mono',monospace;}
+  .ai-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .confidence-bar{height:6px;border-radius:3px;background:var(--bg);overflow:hidden;margin-top:4px;}
+  .confidence-fill{height:6px;border-radius:3px;}
+
+  /* VIDEO */
+  .video-table .video-thumb{width:80px;height:45px;border-radius:6px;background:linear-gradient(135deg,#1d4ed8,#0891b2);display:flex;align-items:center;justify-content:center;font-size:20px;}
+  .file-id{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+  /* DEADLINE */
+  .deadline-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px;}
+  .deadline-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;}
+  .deadline-info h4{font-size:14px;font-weight:600;margin-bottom:4px;}
+  .deadline-info p{font-size:12px;color:var(--muted);}
+  .deadline-timeline{display:flex;gap:12px;font-size:12px;color:var(--muted);}
+  .deadline-timeline span{display:flex;align-items:center;gap:4px;}
+
+  /* GURUH */
+  .group-card-admin{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px;}
+  .group-card-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;}
+
+  /* KURATOR */
+  .role-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px;}
+  .role-badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;}
+  .role-superadmin{background:#1e1b4b;color:#818cf8;}
+  .role-teacher{background:#052e16;color:#4ade80;}
+  .role-curator{background:#2d1a00;color:#fbbf24;}
+  .perm-list{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+  .perm-tag{font-size:11px;background:var(--surface2);padding:3px 8px;border-radius:6px;color:var(--muted);}
+  .perm-tag.has{background:#0a1628;color:#60a5fa;}
+
+  /* TELEGRAM BOT */
+  .bot-config{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px;}
+  .bot-status{display:flex;align-items:center;gap:8px;margin-bottom:16px;}
+  .bot-dot{width:10px;height:10px;border-radius:50%;background:var(--success);box-shadow:0 0 8px var(--success);}
+  .info-box{background:var(--surface2);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:16px;}
+  .info-box p{font-size:13px;color:var(--muted);line-height:1.6;}
+  .info-box strong{color:var(--text);}
+
+  /* MISC */
+  .divider{height:1px;background:var(--border);margin:20px 0;}
+  .empty-state{text-align:center;padding:48px 24px;color:var(--muted);}
+  .empty-state .icon{font-size:48px;margin-bottom:12px;}
+  .search-bar{display:flex;gap:10px;margin-bottom:16px;}
+  .search-bar input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 14px;color:var(--text);font-size:13px;font-family:inherit;outline:none;}
+  .search-bar input:focus{border-color:var(--accent);}
+  .filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+  .filter-btn{padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit;transition:all .2s;}
+  .filter-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo">TestHub</div>
+    <div class="sub">Admin Panel</div>
+  </div>
+
+  <div class="nav-section">Asosiy</div>
+  <div class="nav-item active" onclick="showContent('dashboard',this)"><div class="icon">📊</div>Dashboard</div>
+
+  <div class="nav-section">Testlar</div>
+  <div class="nav-item" onclick="showContent('tests',this)"><div class="icon">📋</div>Barcha testlar</div>
+  <div class="nav-item" onclick="showContent('qdb',this)"><div class="icon">🗄️</div>Savol bazasi</div>
+  <div class="nav-item" onclick="showContent('create',this)"><div class="icon">➕</div>Test yaratish</div>
+
+  <div class="nav-section">Boshqaruv</div>
+  <div class="nav-item" onclick="showContent('deadline',this)"><div class="icon">⏰</div>Deadline<span class="nav-badge warn">3</span></div>
+  <div class="nav-item" onclick="showContent('groups',this)"><div class="icon">👥</div>Guruhlar</div>
+  <div class="nav-item" onclick="showContent('ai',this)"><div class="icon">🤖</div>AI tekshiruv<span class="nav-badge">7</span></div>
+
+  <div class="nav-section">Media</div>
+  <div class="nav-item" onclick="showContent('video',this)"><div class="icon">📹</div>Telegram Video</div>
+
+  <div class="nav-section">Foydalanuvchilar</div>
+  <div class="nav-item" onclick="showContent('users',this)"><div class="icon">👤</div>Foydalanuvchilar</div>
+  <div class="nav-item" onclick="showContent('curators',this)"><div class="icon">🔑</div>Kuratorlar & Rollar</div>
+
+  <div class="nav-section">Moliya</div>
+  <div class="nav-item" onclick="showContent('payments',this)"><div class="icon">💳</div>To'lovlar</div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="pageTitle">Dashboard</div>
+    <div class="topbar-right">
+      <span style="font-size:12px;color:var(--muted);">Super Admin</span>
+      <div class="avatar">S</div>
+    </div>
+  </div>
+
+  <!-- ===== DASHBOARD ===== -->
+  <div id="dashboard" class="content active">
+    <div class="stats-grid">
+      <div class="stat-card"><div class="num" style="color:var(--accent);">1,284</div><div class="lbl">Jami foydalanuvchilar</div><div class="trend up">↑ +47 bu hafta</div></div>
+      <div class="stat-card"><div class="num" style="color:var(--accent2);">6,720</div><div class="lbl">Jami testlar ishlangan</div><div class="trend up">↑ +312 bugun</div></div>
+      <div class="stat-card"><div class="num" style="color:#a78bfa;">23</div><div class="lbl">AI kutmoqda</div><div class="trend down">↑ tekshirilmagan</div></div>
+      <div class="stat-card"><div class="num" style="color:var(--warn);">18</div><div class="lbl">Faol guruhlar</div><div class="trend up">↑ +2 yangi</div></div>
+      <div class="stat-card"><div class="num" style="color:var(--success);">4.2M</div><div class="lbl">Jami daromad (so'm)</div><div class="trend up">↑ +840K bugun</div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+      <div class="table-wrap">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:14px;font-weight:700;">Oxirgi AI tekshiruvlar</div>
+        <table>
+          <thead><tr><th>Foydalanuvchi</th><th>Savol</th><th>Ball</th><th>Holat</th></tr></thead>
+          <tbody>
+            <tr><td>Alisher Q.</td><td>41-savol</td><td style="font-family:'JetBrains Mono';color:var(--warn);">6/9</td><td><span class="badge badge-pending">Kutmoqda</span></td></tr>
+            <tr><td>Zulfiya H.</td><td>42-savol</td><td style="font-family:'JetBrains Mono';color:var(--success);">9/9</td><td><span class="badge badge-active">Tasdiqlandi</span></td></tr>
+            <tr><td>Murod T.</td><td>43-savol</td><td style="font-family:'JetBrains Mono';color:var(--danger);">2/9</td><td><span class="badge badge-active">Tasdiqlandi</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-wrap">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:14px;font-weight:700;">Yaqinlashayotgan deadlinelar</div>
+        <table>
+          <thead><tr><th>Test</th><th>Guruh</th><th>Qolgan vaqt</th></tr></thead>
+          <tbody>
+            <tr><td>DTM 2023-5</td><td>10-B sinf</td><td style="color:var(--danger);">2 soat</td></tr>
+            <tr><td>Atestatsiya 1</td><td>O'qituvchilar</td><td style="color:var(--warn);">1 kun</td></tr>
+            <tr><td>Organik kimyo</td><td>11-A sinf</td><td style="color:var(--success);">3 kun</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TESTLAR ===== -->
+  <div id="tests" class="content">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab(this,'tab-dtm')">🔴 DTM</button>
+      <button class="tab" onclick="switchTab(this,'tab-sert')">📗 Milliy Sertifikat</button>
+      <button class="tab" onclick="switchTab(this,'tab-ates')">🎓 Atestatsiya</button>
+      <button class="tab" onclick="switchTab(this,'tab-topic')">📌 Mavzular</button>
+    </div>
+
+    <div id="tab-dtm" class="tab-content active">
+      <div class="section-header">
+        <h3>DTM Testlari</h3>
+        <div class="btn-group">
+          <button class="btn btn-outline btn-sm" onclick="showModal('deadlineModal')">⏰ Deadline</button>
+          <button class="btn btn-outline btn-sm" onclick="showModal('groupModal')">👥 Guruhda ochish</button>
+          <button class="btn btn-primary btn-sm" onclick="showContent('create',null)">+ Yangi variant</button>
+        </div>
+      </div>
+      <div class="search-bar"><input placeholder="Qidirish..."/></div>
+      <div class="filter-row">
+        <button class="filter-btn active">Barchasi</button>
+        <button class="filter-btn">2025</button>
+        <button class="filter-btn">2024</button>
+        <button class="filter-btn">2023</button>
+        <button class="filter-btn">2020</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Variant</th><th>Yil</th><th>Savollar</th><th>Ishlangan</th><th>Holat</th><th>Amallar</th></tr></thead>
+          <tbody>
+            <tr>
+              <td style="font-weight:600;">DTM 1-variant</td>
+              <td>2023</td>
+              <td><span class="badge badge-dtm">30 savol</span></td>
+              <td style="font-family:'JetBrains Mono'">247</td>
+              <td><span class="badge badge-active">Faol</span></td>
+              <td><div class="btn-group">
+                <button class="btn btn-outline btn-xs">Tahrirlash</button>
+                <button class="btn btn-outline btn-xs" onclick="showModal('deadlineModal')">⏰</button>
+                <button class="btn btn-outline btn-xs" onclick="showModal('groupModal')">👥</button>
+                <button class="btn btn-xs" style="background:#2d0a0a;color:#f87171;border:none;">O'chirish</button>
+              </div></td>
+            </tr>
+            <tr>
+              <td style="font-weight:600;">DTM 2-variant</td>
+              <td>2023</td>
+              <td><span class="badge badge-dtm">30 savol</span></td>
+              <td style="font-family:'JetBrains Mono'">183</td>
+              <td><span class="badge badge-active">Faol</span></td>
+              <td><div class="btn-group">
+                <button class="btn btn-outline btn-xs">Tahrirlash</button>
+                <button class="btn btn-outline btn-xs" onclick="showModal('deadlineModal')">⏰</button>
+                <button class="btn btn-outline btn-xs" onclick="showModal('groupModal')">👥</button>
+                <button class="btn btn-xs" style="background:#2d0a0a;color:#f87171;border:none;">O'chirish</button>
+              </div></td>
+            </tr>
+            <tr>
+              <td style="font-weight:600;">O'zingizni sinang</td>
+              <td>—</td>
+              <td><span style="font-size:11px;color:var(--muted);">Random: 4+13+13</span></td>
+              <td style="font-family:'JetBrains Mono'">1,420</td>
+              <td><span class="badge badge-active">Doim faol</span></td>
+              <td><div class="btn-group"><button class="btn btn-outline btn-xs">Sozlash</button><button class="btn btn-outline btn-xs" onclick="showModal('groupModal')">👥</button></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="tab-sert" class="tab-content">
+      <div class="section-header">
+        <h3>Milliy Sertifikat Kitoblari</h3>
+        <button class="btn btn-primary btn-sm" onclick="showModal('createModal')">+ Kitob qo'shish</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Muallif</th><th>Variantlar</th><th>Format</th><th>Holat</th><th>Amallar</th></tr></thead>
+          <tbody>
+            <tr>
+              <td style="font-weight:600;">Sohibjon Boboyev</td>
+              <td style="font-family:'JetBrains Mono'">15 variant</td>
+              <td><span class="badge badge-free">43 savol • BEPUL</span></td>
+              <td><span class="badge badge-active">Faol</span></td>
+              <td><div class="btn-group"><button class="btn btn-outline btn-xs">Tahrirlash</button></div></td>
+            </tr>
+            <tr>
+              <td style="font-weight:600;">Maruf Tongotarov</td>
+              <td style="font-family:'JetBrains Mono'">12 variant</td>
+              <td><span class="badge badge-free">43 savol • BEPUL</span></td>
+              <td><span class="badge badge-active">Faol</span></td>
+              <td><div class="btn-group"><button class="btn btn-outline btn-xs">Tahrirlash</button></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="tab-ates" class="tab-content">
+      <div class="section-header">
+        <h3>Atestatsiya Testlari</h3>
+        <div class="btn-group">
+          <button class="btn btn-outline btn-sm" onclick="showModal('deadlineModal')">⏰ Deadline</button>
+          <button class="btn btn-outline btn-sm" onclick="showModal('groupModal')">👥 Guruhda ochish</button>
+          <button class="btn btn-primary btn-sm">+ Variant qo'shish</button>
+        </div>
+      </div>
+      <div class="info-box"><p><strong>Atestatsiya formati:</strong> 35 savol = 7 qiyin + 18 o'rta + 10 oson | 3 rasmli + 3 grafikli + 3 nazariy + 26 yozma | 120 daqiqa</p></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Variant</th><th>Savollar</th><th>Ishlangan</th><th>Holat</th><th>Deadline</th><th>Amallar</th></tr></thead>
+          <tbody>
+            <tr>
+              <td style="font-weight:600;">Atestatsiya 1-variant</td>
+              <td><span class="badge badge-ates">35 savol</span></td>
+              <td style="font-family:'JetBrains Mono'">89</td>
+              <td><span class="badge badge-active">Faol</span></td>
+              <td style="color:var(--warn);font-size:12px;">15-iyun 18:00</td>
+              <td><div class="btn-group">
+                <button class="btn btn-outline btn-xs">Tahrirlash</button>
+                <button class="btn btn-outline btn-xs" onclick="showModal('deadlineModal')">⏰</button>
+                <button class="btn btn-outline btn-xs" onclick="showModal('groupModal')">👥</button>
+              </div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="tab-topic" class="tab-content">
+      <div class="section-header">
+        <h3>Mavzulashtirilgan Testlar</h3>
+        <div class="btn-group">
+          <button class="btn btn-outline btn-sm" onclick="showModal('deadlineModal')">⏰ Deadline</button>
+          <button class="btn btn-outline btn-sm" onclick="showModal('groupModal')">👥 Guruhda ochish</button>
+          <button class="btn btn-primary btn-sm" onclick="showContent('create',null)">+ Test yaratish</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Test nomi</th><th>Savollar</th><th>Narx</th><th>Holat</th><th>Amallar</th></tr></thead>
+          <tbody>
+            <tr>
+              <td style="font-weight:600;">Organik kimyo</td>
+              <td>20 savol</td>
+              <td style="color:var(--warn);">3 000 so'm</td>
+              <td><span class="badge badge-active">Faol</span></td>
+              <td><div class="btn-group">
+                <button class="btn btn-outline btn-xs">Tahrirlash</button>
+                <button class="btn btn-outline btn-xs" onclick="showModal('deadlineModal')">⏰</button>
+                <button class="btn btn-outline btn-xs" onclick="showModal('groupModal')">👥</button>
+              </div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SAVOL BAZA ===== -->
+  <div id="qdb" class="content">
+    <div class="section-header">
+      <h3>Savol Bazasi</h3>
+      <button class="btn btn-primary" onclick="showModal('addQModal')">+ Savol qo'shish</button>
+    </div>
+    <div class="info-box"><p>Har bir daraja va tur uchun alohida savollar kiritiladi. <strong>Random tanlash:</strong> DTM — 4 qiyin + 13 o'rta + 13 oson (30 ta) | Atestatsiya — 7 qiyin + 18 o'rta + 10 oson (35 ta)</p></div>
+
+    <div class="qdb-grid">
+      <!-- OSON -->
+      <div class="qdb-card">
+        <h4><span style="font-size:20px;">🟢</span> Oson daraja</h4>
+        <div class="qdb-type-row" onclick="showModal('addQModal')">
+          <span class="type-name">📷 Rasmli</span>
+          <span class="type-count" style="color:var(--accent2);">34</span>
+        </div>
+        <div class="qdb-type-row" onclick="showModal('addQModal')">
+          <span class="type-name">📈 Grafikli</span>
+          <span class="type-count" style="color:var(--accent2);">28</span>
+        </div>
+        <div class="qdb-type-row" onclick="showModal('addQModal')">
+          <span class="type-name">📚 Nazariy</span>
+          <span class="type-count" style="color:var(--accent2);">41</span>
+        </div>
+        <div class="qdb-type-row" onclick="showModal('addQModal')">
+          <span class="type-name">✍️ Yozma</span>
+          <span class="type-count" style="color:var(--accent2);">44</span>
+        </div>
+        <div class="qdb-total">
+          <span>Jami oson</span>
+          <strong style="color:var(--success);">147</strong>
+        </div>
+      </div>
+
+      <!-- O'RTA -->
+      <div class="qdb-card">
+        <h4><span style="font-size:20px;">🟡</span> O'rta daraja</h4>
+        <div class="qdb-type-row" onclick="showModal('addQModal')">
+          <span class="type-name">📷 Rasmli</span>
+          <span class="type-count" style="color:var(--warn);">52</span>
+        </div>
+        <div class="qdb-type-row" onclick="showModal('addQModal')">
+          <span class="type-name">📈 Grafikli</span>
+          <span class="type-count" style="color:var(--warn);">47</span>
+        </div>
+        <div class="qdb-type-row" onclick="showModal('addQModal')">
+          <span class="type-name">📚 Nazariy</span>
+          <span class="type-count" style="color:var(--warn);">58</span>
+        </div>
+        <div class="qdb-type-row" onclick="showModal('addQModal')">
+          <span class="type-name">✍️ Yozma</span>
+          <span class="type-count" style="color:var(--warn);">46</span>
+        </div>
+        <div class="qdb-total">
+          <span>Jami o'rta</span>
+          <strong style="color:var(--warn);">203</strong>
+        </div>
+      </div>
+
+      <!-- QIYIN -->
+      <div class="qdb-card">
+        <h4><span style="font-size:20px;">🔴</span> Qiyin daraja</h4>
+        <div class="qdb-type-row" onclick="showModal('addQModal')">
+          <span class="type-name">📷 Rasmli</span>
+          <span class="type-count" style="color:var(--danger);">22</span>
+        </div>
+        <div class="qdb-type-row" onclick="showModal('addQModal')">
+          <span class="type-name">📈 Grafikli</span>
+          <span class="type-count" style="color:var(--danger);">18</span>
+        </div>
+        <div class="qdb-type-row" onclick="showModal('addQModal')">
+          <span class="type-name">📚 Nazariy</span>
+          <span class="type-count" style="color:var(--danger);">24</span>
+        </div>
+        <div class="qdb-type-row" onclick="showModal('addQModal')">
+          <span class="type-name">✍️ Yozma</span>
+          <span class="type-count" style="color:var(--danger);">25</span>
+        </div>
+        <div class="qdb-total">
+          <span>Jami qiyin</span>
+          <strong style="color:var(--danger);">89</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:14px;font-weight:700;">Barcha savollar (439 ta)</span>
+        <div class="btn-group">
+          <select style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--text);font-size:12px;font-family:inherit;">
+            <option>Barchasi</option><option>Oson</option><option>O'rta</option><option>Qiyin</option>
+          </select>
+          <select style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--text);font-size:12px;font-family:inherit;">
+            <option>Barcha turlar</option><option>Rasmli</option><option>Grafikli</option><option>Nazariy</option><option>Yozma</option>
+          </select>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>#</th><th>Savol matni</th><th>Tur</th><th>Daraja</th><th>Javob</th><th>Amallar</th></tr></thead>
+        <tbody>
+          <tr>
+            <td style="font-family:'JetBrains Mono';color:var(--muted);">001</td>
+            <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">CH₄ yonishida hosil bo'ladigan mahsulotlar...</td>
+            <td><span class="badge" style="background:#052e16;color:#4ade80;">Yozma</span></td>
+            <td><span class="badge" style="background:#2d1a00;color:#fbbf24;">O'rta</span></td>
+            <td style="font-family:'JetBrains Mono';color:var(--accent2);">CO₂ va H₂O</td>
+            <td><div class="btn-group"><button class="btn btn-outline btn-xs">Tahrirlash</button><button class="btn btn-xs" style="background:#2d0a0a;color:#f87171;border:none;">O'chirish</button></div></td>
+          </tr>
+          <tr>
+            <td style="font-family:'JetBrains Mono';color:var(--muted);">002</td>
+            <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Rasmda ko'rsatilgan reaksiya turini aniqlang</td>
+            <td><span class="badge" style="background:#0a1628;color:#60a5fa;">Rasmli</span></td>
+            <td><span class="badge" style="background:#2d0a0a;color:#f87171;">Qiyin</span></td>
+            <td style="font-family:'JetBrains Mono';color:var(--accent2);">A</td>
+            <td><div class="btn-group"><button class="btn btn-outline btn-xs">Tahrirlash</button><button class="btn btn-xs" style="background:#2d0a0a;color:#f87171;border:none;">O'chirish</button></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== TEST YARATISH ===== -->
+  <div id="create" class="content">
+    <div class="section-header"><h3>Yangi Test Yaratish</h3></div>
+    <div style="max-width:600px;">
+      <div class="step-indicator">
+        <div class="step done">1. Tur</div>
+        <div class="step active">2. Ma'lumot</div>
+        <div class="step">3. Savollar</div>
+        <div class="step">4. Tasdiqlash</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;">
+        <div class="field"><label>Test turi</label>
+          <select><option>DTM Varianti</option><option>Atestatsiya</option><option>Mavzulashtirilgan</option></select>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>Test nomi (UZ)</label><input placeholder="DTM 2024 — 1-variant"/></div>
+          <div class="field"><label>Test nomi (RU)</label><input placeholder="ЕГЭ 2024 — вариант 1"/></div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>Vaqt (daqiqa)</label><input type="number" value="60"/></div>
+          <div class="field"><label>Narx (so'm)</label><input type="number" value="5000"/></div>
+        </div>
+        <div class="field"><label>Kitob / Muallif (ixtiyoriy)</label><input placeholder="Sohibjon Boboyev"/></div>
+        <div class="field"><label>Deadline (ixtiyoriy)</label><input type="datetime-local"/></div>
+
+        <div class="divider"></div>
+        <div style="font-size:14px;font-weight:700;margin-bottom:14px;">Savollar taqsimoti</div>
+        <div class="info-box"><p><strong>DTM:</strong> 30 ta jami = 4 qiyin + 13 o'rta + 13 oson<br><strong>Savol turlari:</strong> 2 rasmli + 2 grafikli + 2 nazariy + 24 yozma</p></div>
+        <div class="grid-3">
+          <div class="field"><label>🔴 Qiyin</label><input type="number" value="4"/></div>
+          <div class="field"><label>🟡 O'rta</label><input type="number" value="13"/></div>
+          <div class="field"><label>🟢 Oson</label><input type="number" value="13"/></div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>📷 Rasmli</label><input type="number" value="2"/></div>
+          <div class="field"><label>📈 Grafikli</label><input type="number" value="2"/></div>
+          <div class="field"><label>📚 Nazariy</label><input type="number" value="2"/></div>
+          <div class="field"><label>✍️ Yozma</label><input type="number" value="24"/></div>
+        </div>
+        <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:13px;color:var(--muted);">Jami:</span>
+          <span style="font-family:'JetBrains Mono';font-weight:700;color:var(--success);">30 / 30 ✓</span>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-outline" style="flex:1;">← Orqaga</button>
+          <button class="btn btn-primary" style="flex:2;">Keyingi bosqich →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== DEADLINE ===== -->
+  <div id="deadline" class="content">
+    <div class="section-header">
+      <h3>Deadline boshqaruvi</h3>
+      <button class="btn btn-primary" onclick="showModal('deadlineModal')">+ Yangi deadline</button>
+    </div>
+    <div class="deadline-card">
+      <div class="deadline-head">
+        <div class="deadline-info">
+          <h4>DTM 2023 — 5-variant</h4>
+          <p>Guruh: 10-B sinf kimyo • 32 a'zo</p>
+          <div class="deadline-timeline">
+            <span>🟢 Boshlangan: 12-iyun 09:00</span>
+            <span>🔴 Tugaydi: 15-iyun 18:00</span>
+          </div>
+        </div>
+        <span class="badge badge-active">Faol</span>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline btn-sm">Tahrirlash</button>
+        <button class="btn btn-sm" style="background:#2d1a00;color:var(--warn);border:none;">To'xtatish</button>
+        <button class="btn btn-sm btn-danger">O'chirish</button>
+      </div>
+    </div>
+    <div class="deadline-card">
+      <div class="deadline-head">
+        <div class="deadline-info">
+          <h4>Atestatsiya 1-variant</h4>
+          <p>Guruh: O'qituvchilar guruhi • 28 a'zo</p>
+          <div class="deadline-timeline">
+            <span>🟡 Boshlangan: 14-iyun 08:00</span>
+            <span>🔴 Tugaydi: 16-iyun 17:00</span>
+          </div>
+        </div>
+        <span class="badge badge-pending">Kutilmoqda</span>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline btn-sm">Tahrirlash</button>
+        <button class="btn btn-sm btn-success">Faollashtirish</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== GURUHLAR ===== -->
+  <div id="groups" class="content">
+    <div class="section-header">
+      <h3>Guruhlar</h3>
+      <button class="btn btn-primary" onclick="showModal('groupCreateModal')">+ Guruh yaratish</button>
+    </div>
+    <div class="group-card-admin">
+      <div class="group-card-head">
+        <div>
+          <h4 style="font-size:15px;font-weight:700;margin-bottom:4px;">10-B sinf kimyo</h4>
+          <p style="font-size:12px;color:var(--muted);">32 a'zo • Kurator: Sobirbek T.</p>
+        </div>
+        <span class="badge badge-active">Faol</span>
+      </div>
+      <div style="margin-bottom:10px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Biriktirilgan testlar:</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span class="badge badge-dtm">DTM 2023-5</span>
+          <span class="badge badge-ates">Atestatsiya 1</span>
+          <span class="badge badge-topic">Organik kimyo</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline btn-sm">A'zolar (32)</button>
+        <button class="btn btn-outline btn-sm" onclick="showModal('deadlineModal')">⏰ Deadline</button>
+        <button class="btn btn-primary btn-sm">Test biriktirish</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== AI TEKSHIRUV ===== -->
+  <div id="ai" class="content">
+    <div class="section-header">
+      <h3>AI Tekshiruv Paneli</h3>
+      <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--success);display:inline-block;"></span>
+        Gemini Flash — Faol
+        <span style="background:var(--surface2);padding:3px 10px;border-radius:20px;">1,247 / 1,500 so'rov</span>
+      </div>
+    </div>
+
+    <div class="filter-row">
+      <button class="filter-btn active">Barcha (23)</button>
+      <button class="filter-btn">Kutmoqda (7)</button>
+      <button class="filter-btn">Tasdiqlangan</button>
+      <button class="filter-btn">Qayta tekshirish</button>
+    </div>
+
+    <div class="ai-queue">
+      <!-- AI card 1 -->
+      <div class="ai-card">
+        <div class="ai-card-head">
+          <div class="ai-thumb">📄</div>
+          <div class="ai-card-info">
+            <h4>Alisher Qodirov — 41-savol</h4>
+            <p>DTM 2023-5 • Yuklandi: 11-iyun 14:23</p>
+            <div style="margin-top:6px;"><span class="badge badge-pending">AI tekshirdi — Tasdiqlash kutilmoqda</span></div>
+          </div>
+        </div>
+        <div class="ai-score-row">
+          <div class="ai-sub">
+            <div class="s-lbl">AI ball</div>
+            <div class="s-val" style="color:var(--warn);">6/9</div>
+            <div class="confidence-bar"><div class="confidence-fill" style="width:67%;background:var(--warn);"></div></div>
+          </div>
+          <div class="ai-sub">
+            <div class="s-lbl">a) Na+O₂</div>
+            <div class="s-val" style="color:var(--success);">3/3 ✅</div>
+          </div>
+          <div class="ai-sub">
+            <div class="s-lbl">b) Fe+HCl</div>
+            <div class="s-val" style="color:var(--warn);">2/3 ⚠️</div>
+          </div>
+          <div class="ai-sub">
+            <div class="s-lbl">c) CaCO₃</div>
+            <div class="s-val" style="color:var(--danger);">1/3 ❌</div>
+          </div>
+        </div>
+        <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:10px 12px;margin:10px 0;font-size:12px;color:var(--muted);line-height:1.5;">
+          <strong style="color:#a78bfa;">AI izohi:</strong> b) javobda koeffitsient noto'g'ri: Fe + 2HCl → FeCl₂ + H₂↑ bo'lishi kerak edi. c) javobda CaO va CO₂ ajratilmagan.
+        </div>
+        <div class="ai-actions">
+          <button class="btn btn-success btn-sm">✓ Tasdiqlash (6/9)</button>
+          <button class="btn btn-outline btn-sm">Ball o'zgartirish</button>
+          <button class="btn btn-outline btn-sm">Qayta yuborish</button>
+          <button class="btn btn-outline btn-sm">🖼 Rasmni ko'rish</button>
+          <button class="btn btn-warn btn-sm">Qo'lda baholash</button>
+        </div>
+      </div>
+
+      <!-- AI card 2 -->
+      <div class="ai-card">
+        <div class="ai-card-head">
+          <div class="ai-thumb">🔬</div>
+          <div class="ai-card-info">
+            <h4>Zulfiya Hasanova — 42-savol (3 reaksiya)</h4>
+            <p>DTM 2023-5 • Yuklandi: 11-iyun 14:45</p>
+            <div style="margin-top:6px;"><span class="badge badge-active">Tasdiqlangan</span></div>
+          </div>
+        </div>
+        <div class="ai-score-row">
+          <div class="ai-sub"><div class="s-lbl">Jami ball</div><div class="s-val" style="color:var(--success);">9/9</div></div>
+          <div class="ai-sub"><div class="s-lbl">Reaksiya 1</div><div class="s-val" style="color:var(--success);">✅ 3/3</div></div>
+          <div class="ai-sub"><div class="s-lbl">Reaksiya 2</div><div class="s-val" style="color:var(--success);">✅ 3/3</div></div>
+          <div class="ai-sub"><div class="s-lbl">Reaksiya 3</div><div class="s-val" style="color:var(--success);">✅ 3/3</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TELEGRAM VIDEO ===== -->
+  <div id="video" class="content">
+    <div class="section-header">
+      <h3>Telegram Video Yechimlar</h3>
+      <button class="btn btn-primary" onclick="showModal('videoModal')">+ Video qo'shish</button>
+    </div>
+
+    <div class="bot-config">
+      <div class="bot-status">
+        <div class="bot-dot"></div>
+        <span style="font-size:14px;font-weight:600;">Telegram Bot — Ulangan</span>
+      </div>
+      <div class="grid-2">
+        <div class="field"><label>Bot Token</label><input type="password" value="7234xxxxxxx:AAF..." /></div>
+        <div class="field"><label>Kanal ID</label><input value="@testhub_solutions" /></div>
+      </div>
+      <div class="info-box">
+        <p>📹 Video kanalga yuklanganda bot avtomatik <strong>file_id</strong> oladi. Foydalanuvchi "Video ko'rish" bosganda <strong>Telegram CDN</strong> orqali o'ynaydi — serverda video saqlanmaydi, xarajat yo'q.</p>
+      </div>
+      <button class="btn btn-primary btn-sm">Sozlamalarni saqlash</button>
+    </div>
+
+    <div class="table-wrap video-table">
+      <table>
+        <thead><tr><th>Video</th><th>Savol</th><th>file_id</th><th>Kanal</th><th>Davomiyligi</th><th>Amallar</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><div class="video-thumb">▶</div></td>
+            <td><div style="font-weight:600;">DTM 2023-5 / 3-savol</div><div style="font-size:11px;color:var(--muted);">O'rta daraja</div></td>
+            <td><div class="file-id">BAACAgIAAxkBAAIBf2Ri...</div></td>
+            <td>@testhub_solutions</td>
+            <td>3:24</td>
+            <td><div class="btn-group"><button class="btn btn-outline btn-xs">Tahrirlash</button><button class="btn btn-xs" style="background:#2d0a0a;color:#f87171;border:none;">O'chirish</button></div></td>
+          </tr>
+          <tr>
+            <td><div class="video-thumb">▶</div></td>
+            <td><div style="font-weight:600;">DTM 2023-5 / 41-43-savollar</div><div style="font-size:11px;color:var(--muted);">AI javoblar tahlili</div></td>
+            <td><div class="file-id">BAACAgIAAxkBAAIBgGRi...</div></td>
+            <td>@testhub_solutions</td>
+            <td>7:15</td>
+            <td><div class="btn-group"><button class="btn btn-outline btn-xs">Tahrirlash</button></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== FOYDALANUVCHILAR ===== -->
+  <div id="users" class="content">
+    <div class="section-header">
+      <h3>Foydalanuvchilar (1,284)</h3>
+      <button class="btn btn-outline">📥 Eksport</button>
+    </div>
+    <div class="search-bar"><input placeholder="Ism, telefon raqam bo'yicha qidirish..."/></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Ism</th><th>Telefon</th><th>Testlar</th><th>O'rtacha ball</th><th>Guruh</th><th>Reyting</th></tr></thead>
+        <tbody>
+          <tr>
+            <td style="font-family:'JetBrains Mono'">1</td>
+            <td style="font-weight:600;">Alisher Qodirov</td>
+            <td style="font-family:'JetBrains Mono';font-size:12px;">+998901234567</td>
+            <td>87</td>
+            <td style="color:var(--success);font-family:'JetBrains Mono'">94.2%</td>
+            <td>10-B sinf</td>
+            <td style="font-weight:700;color:var(--warn);">#1 🥇</td>
+          </tr>
+          <tr>
+            <td style="font-family:'JetBrains Mono'">2</td>
+            <td style="font-weight:600;">Zulfiya Hasanova</td>
+            <td style="font-family:'JetBrains Mono';font-size:12px;">+998901234568</td>
+            <td>72</td>
+            <td style="color:var(--success);font-family:'JetBrains Mono'">91.8%</td>
+            <td>DTM tayyorlov</td>
+            <td style="font-weight:700;color:var(--muted);">#2 🥈</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== KURATORLAR ===== -->
+  <div id="curators" class="content">
+    <div class="section-header">
+      <h3>Kuratorlar & Rollar</h3>
+      <button class="btn btn-primary" onclick="showModal('curatorModal')">+ Kurator qo'shish</button>
+    </div>
+
+    <div class="info-box" style="margin-bottom:20px;">
+      <p>
+        <strong>Super Admin:</strong> Barcha huquqlar (foydalanuvchilar, to'lovlar, AI, video, kuratorlar)<br>
+        <strong>O'qituvchi:</strong> Test + savol yaratish, deadline, guruh boshqarish (foydalanuvchilarni emas)<br>
+        <strong>Kurator:</strong> Test ochish/yopish + deadline + guruh (test yarata olmaydi, foydalanuvchi boshqara olmaydi)
+      </p>
+    </div>
+
+    <div class="role-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#5b6bff,#00c9a7);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;">S</div>
+          <div>
+            <div style="font-size:14px;font-weight:700;">Sobirbek Toshtemirov</div>
+            <div style="font-size:12px;color:var(--muted);">+998901234567</div>
+          </div>
+        </div>
+        <span class="role-badge role-superadmin">Super Admin</span>
+      </div>
+      <div class="perm-list">
+        <span class="perm-tag has">Barcha testlar</span>
+        <span class="perm-tag has">Foydalanuvchilar</span>
+        <span class="perm-tag has">To'lovlar</span>
+        <span class="perm-tag has">AI tekshiruv</span>
+        <span class="perm-tag has">Video boshqaruv</span>
+        <span class="perm-tag has">Kuratorlar</span>
+      </div>
+    </div>
+
+    <div class="role-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#22c55e,#16a34a);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;">A</div>
+          <div>
+            <div style="font-size:14px;font-weight:700;">Anvar Rahimov</div>
+            <div style="font-size:12px;color:var(--muted);">+998901234570</div>
+          </div>
+        </div>
+        <span class="role-badge role-teacher">O'qituvchi</span>
+      </div>
+      <div class="perm-list">
+        <span class="perm-tag has">Test yaratish</span>
+        <span class="perm-tag has">Savol kiritish</span>
+        <span class="perm-tag has">Deadline boshqaruv</span>
+        <span class="perm-tag has">Guruh boshqaruv</span>
+        <span class="perm-tag">Foydalanuvchilar ✗</span>
+        <span class="perm-tag">To'lovlar ✗</span>
+      </div>
+      <div style="margin-top:10px;"><span style="font-size:11px;color:var(--muted);">Ruxsat berilgan testlar: </span><span style="font-size:11px;">DTM, Atestatsiya</span></div>
+      <div style="margin-top:8px;"><button class="btn btn-outline btn-xs">Tahrirlash</button></div>
+    </div>
+
+    <div class="role-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;">N</div>
+          <div>
+            <div style="font-size:14px;font-weight:700;">Nodira Yusupova</div>
+            <div style="font-size:12px;color:var(--muted);">+998901234572</div>
+          </div>
+        </div>
+        <span class="role-badge role-curator">Kurator</span>
+      </div>
+      <div class="perm-list">
+        <span class="perm-tag has">Test ochish/yopish</span>
+        <span class="perm-tag has">Deadline</span>
+        <span class="perm-tag has">Guruh boshqaruv</span>
+        <span class="perm-tag">Test yaratish ✗</span>
+        <span class="perm-tag">Foydalanuvchilar ✗</span>
+      </div>
+      <div style="margin-top:10px;"><span style="font-size:11px;color:var(--muted);">Biriktirilgan guruh: </span><span style="font-size:11px;">10-B sinf kimyo</span></div>
+      <div style="margin-top:8px;"><button class="btn btn-outline btn-xs">Tahrirlash</button></div>
+    </div>
+  </div>
+
+  <!-- ===== TO'LOVLAR ===== -->
+  <div id="payments" class="content">
+    <div class="section-header">
+      <h3>To'lovlar</h3>
+    </div>
+    <div class="stats-grid" style="grid-template-columns:1fr 1fr 1fr;max-width:500px;margin-bottom:20px;">
+      <div class="stat-card"><div class="num" style="color:var(--success);">4.2M</div><div class="lbl">Jami (so'm)</div></div>
+      <div class="stat-card"><div class="num" style="color:var(--accent);">840K</div><div class="lbl">Bugun</div></div>
+      <div class="stat-card"><div class="num" style="color:var(--warn);">3</div><div class="lbl">Xatolik</div></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Foydalanuvchi</th><th>Test</th><th>Summa</th><th>Usul</th><th>Sana</th><th>Holat</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Alisher Q.</td>
+            <td>DTM 2023-5</td>
+            <td style="font-family:'JetBrains Mono';color:var(--success);">5 000</td>
+            <td>Click</td>
+            <td style="font-size:12px;color:var(--muted);">11-iyun 14:15</td>
+            <td><span class="badge badge-active">To'langan</span></td>
+          </tr>
+          <tr>
+            <td>Murod T.</td>
+            <td>Atestatsiya 1</td>
+            <td style="font-family:'JetBrains Mono';color:var(--success);">5 000</td>
+            <td>Payme</td>
+            <td style="font-size:12px;color:var(--muted);">11-iyun 13:42</td>
+            <td><span class="badge badge-active">To'langan</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<!-- ===== MODALS ===== -->
+<!-- Deadline Modal -->
+<div id="deadlineModal" class="modal-overlay" onclick="closeModal(event,'deadlineModal')">
+  <div class="modal">
+    <h3>⏰ Deadline Qo'shish</h3>
+    <div class="field"><label>Test tanlang</label>
+      <select><option>DTM 2023 — 5-variant</option><option>Atestatsiya 1-variant</option><option>Organik kimyo</option></select>
+    </div>
+    <div class="field"><label>Guruh tanlang</label>
+      <select><option>10-B sinf kimyo</option><option>DTM tayyorlov</option></select>
+    </div>
+    <div class="grid-2">
+      <div class="field"><label>Boshlanish</label><input type="datetime-local"/></div>
+      <div class="field"><label>Tugash</label><input type="datetime-local"/></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModalById('deadlineModal')">Bekor qilish</button>
+      <button class="btn btn-primary">Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<!-- Guruhda ochish Modal -->
+<div id="groupModal" class="modal-overlay" onclick="closeModal(event,'groupModal')">
+  <div class="modal">
+    <h3>👥 Guruhda Ochish</h3>
+    <div class="field"><label>Guruh tanlang</label>
+      <select><option>10-B sinf kimyo (32 a'zo)</option><option>DTM tayyorlov (18 a'zo)</option><option>O'qituvchilar (28 a'zo)</option></select>
+    </div>
+    <div class="field"><label>Deadline (ixtiyoriy)</label><input type="datetime-local"/></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModalById('groupModal')">Bekor qilish</button>
+      <button class="btn btn-primary">Guruhda ochish</button>
+    </div>
+  </div>
+</div>
+
+<!-- Guruh yaratish Modal -->
+<div id="groupCreateModal" class="modal-overlay" onclick="closeModal(event,'groupCreateModal')">
+  <div class="modal">
+    <h3>👥 Guruh Yaratish</h3>
+    <div class="field"><label>Guruh nomi</label><input placeholder="10-A sinf kimyo"/></div>
+    <div class="field"><label>Kurator</label>
+      <select><option>Anvar Rahimov</option><option>Nodira Yusupova</option></select>
+    </div>
+    <div class="field"><label>Testlarni biriktirish</label>
+      <select multiple style="height:100px;"><option>DTM 2023-5</option><option>Atestatsiya 1</option><option>Organik kimyo</option></select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModalById('groupCreateModal')">Bekor qilish</button>
+      <button class="btn btn-primary">Guruh yaratish</button>
+    </div>
+  </div>
+</div>
+
+<!-- Kurator Modal -->
+<div id="curatorModal" class="modal-overlay" onclick="closeModal(event,'curatorModal')">
+  <div class="modal">
+    <h3>🔑 Kurator / O'qituvchi Qo'shish</h3>
+    <div class="field"><label>Telefon raqam yoki Telegram ID</label><input placeholder="+998901234567"/></div>
+    <div class="field"><label>Ism Familiya</label><input placeholder="Anvar Rahimov"/></div>
+    <div class="field"><label>Rol</label>
+      <select><option>Kurator</option><option>O'qituvchi</option><option>Super Admin</option></select>
+    </div>
+    <div class="field"><label>Ruxsat berilgan testlar (O'qituvchi uchun)</label>
+      <select multiple style="height:90px;"><option>DTM testlari</option><option>Atestatsiya</option><option>Milliy Sertifikat</option><option>Mavzular</option></select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModalById('curatorModal')">Bekor qilish</button>
+      <button class="btn btn-primary">Qo'shish va SMS yuborish</button>
+    </div>
+  </div>
+</div>
+
+<!-- Savol qo'shish Modal -->
+<div id="addQModal" class="modal-overlay" onclick="closeModal(event,'addQModal')">
+  <div class="modal">
+    <h3>➕ Savol Qo'shish</h3>
+    <div class="grid-2">
+      <div class="field"><label>Daraja</label>
+        <select><option>Oson</option><option>O'rta</option><option>Qiyin</option></select>
+      </div>
+      <div class="field"><label>Tur</label>
+        <select><option>Yozma</option><option>Rasmli</option><option>Grafikli</option><option>Nazariy</option></select>
+      </div>
+    </div>
+    <div class="field"><label>Savol matni</label><textarea placeholder="Savol matnini kiriting..."></textarea></div>
+    <div class="field"><label>Rasm (rasmli/grafikli uchun)</label><input type="file" style="padding:6px;"/></div>
+    <div class="field"><label>A javob</label><input placeholder="A) ..."/></div>
+    <div class="field"><label>B javob</label><input placeholder="B) ..."/></div>
+    <div class="field"><label>C javob</label><input placeholder="C) ..."/></div>
+    <div class="field"><label>D javob</label><input placeholder="D) ..."/></div>
+    <div class="field"><label>To'g'ri javob</label>
+      <select><option>A</option><option>B</option><option>C</option><option>D</option></select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModalById('addQModal')">Bekor qilish</button>
+      <button class="btn btn-primary">Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<!-- Video Modal -->
+<div id="videoModal" class="modal-overlay" onclick="closeModal(event,'videoModal')">
+  <div class="modal">
+    <h3>📹 Video Qo'shish</h3>
+    <div class="info-box"><p>Videoni Telegram kanalga yuboring. Bot avtomatik <strong>file_id</strong> oladi. Keyin savol bilan biriktiring.</p></div>
+    <div class="field"><label>file_id (Telegram botdan)</label><input placeholder="BAACAgIAAxkBAAIBf2Ri..." style="font-family:'JetBrains Mono';font-size:12px;"/></div>
+    <div class="field"><label>Qaysi savol uchun</label>
+      <select><option>DTM 2023-5 / 3-savol</option><option>DTM 2023-5 / 41-43-savollar</option></select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModalById('videoModal')">Bekor qilish</button>
+      <button class="btn btn-primary">Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function showContent(id, navItem) {
+  document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(navItem) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    navItem.classList.add('active');
+  }
+  const titles = {
+    dashboard:'Dashboard',tests:'Testlar',qdb:'Savol Bazasi',create:'Test Yaratish',
+    deadline:'Deadline',groups:'Guruhlar',ai:'AI Tekshiruv',video:'Telegram Video',
+    users:'Foydalanuvchilar',curators:'Kuratorlar & Rollar',payments:'To\'lovlar'
+  };
+  document.getElementById('pageTitle').textContent = titles[id] || id;
+}
+function switchTab(btn, tabId) {
+  const parent = btn.closest('.content');
+  parent.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  parent.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+function showModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModalById(id) { document.getElementById(id).classList.remove('show'); }
+function closeModal(e, id) { if(e.target.classList.contains('modal-overlay')) closeModalById(id); }
+</script>
+</body>
+</html>

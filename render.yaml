@@ -1,0 +1,44 @@
+# Render.com — TestHub backend (NestJS) bepul joylashtirish blueprint'i
+# Dashboard > New > Blueprint > shu repo'ni tanlang.
+# DATABASE_URL ni Neon'dan olib, env sifatida kiriting.
+services:
+  - type: web
+    name: testhub-backend
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm ci && npx prisma generate && npm run build
+    # migrate deploy — har deploy'da yangi migratsiyalarni qo'llaydi
+    startCommand: npx prisma migrate deploy && node dist/main
+    healthCheckPath: /api
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Render PORT'ni avtomatik beradi — kod process.env.PORT'ni o'qiydi
+      - key: DATABASE_URL
+        sync: false   # Neon connection string — qo'lda kiriting
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        sync: false   # masalan: https://testhub.vercel.app
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENROUTER_MODEL
+        value: nex-agi/nex-n2-pro:free,google/gemma-4-31b-it:free,google/gemma-4-26b-a4b-it:free,nvidia/nemotron-nano-12b-v2-vl:free
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY
+        sync: false
+      - key: R2_SECRET_KEY
+        sync: false
+      - key: R2_BUCKET
+        value: testhub-uploads
+      - key: R2_PUBLIC_URL
+        sync: false
+      # Ixtiyoriy: SMS / Telegram bo'lsa
+      - key: ESKIZ_EMAIL
+        sync: false
+      - key: ESKIZ_PASSWORD
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false

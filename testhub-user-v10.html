@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TestHub</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
+
+:root {
+  /* Tungi rejim — Deep space indigo */
+  --bg:  #0d0e1a;
+  --s1:  #13152b;
+  --s2:  #1b1e38;
+  --s3:  #222548;
+  --bd:  #2e3260;
+  --tx:  #eef0ff;
+  --mt:  #7b84b8;
+  --ac:  #7c6af5;   /* asosiy — lavender-violet */
+  --ac2: #e85d7a;   /* ikkinchi — coral-rose */
+  --blue:#4f9cf9;
+  --grn: #22c55e;
+  --red: #ef4444;
+  --amber:#f59e0b;
+  --r:   14px;
+  --rs:  10px;
+  /* gradient shorthands */
+  --g-accent: linear-gradient(135deg,#7c6af5,#e85d7a);
+  --g-green:  linear-gradient(135deg,#22c55e,#16a34a);
+  --g-red:    linear-gradient(135deg,#ef4444,#dc2626);
+  --g-blue:   linear-gradient(135deg,#4f9cf9,#2563eb);
+  --g-gold:   linear-gradient(135deg,#f59e0b,#d97706);
+  --g-card:   linear-gradient(160deg,#1b1e38,#13152b);
+}
+/* ── KUNDUZGI REJIM ── */
+body.light {
+  --bg:  #f5f6ff;
+  --s1:  #ffffff;
+  --s2:  #eef0ff;
+  --s3:  #e4e7ff;
+  --bd:  #c5caee;
+  --tx:  #1a1c3a;
+  --mt:  #5a5f85;
+  --ac:  #6b5cf0;
+  --ac2: #e04b6a;
+  --blue:#2563eb;
+  --grn: #16a34a;
+  --red: #dc2626;
+  --amber:#d97706;
+  --g-card: linear-gradient(160deg,#ffffff,#f0f2ff);
+}
+body.light .ai-sec { background:linear-gradient(135deg,#f3f0ff,#fff0f5) }
+body.light .q-card  { background:#fff; box-shadow:0 2px 12px rgba(100,80,240,.07) }
+body.light .opt     { background:#f8f9ff }
+body.light .opt:hover { background:#eeefff }
+body.light .opt.sel { background:#ede9ff; border-color:#7c6af5 }
+body.light .tinp    { background:#f8f9ff }
+body.light .upload-zone { background:transparent }
+body.light .hero    { background:linear-gradient(135deg,#ede9ff,#fce4ee) }
+body.light .test-hdr { background:#fff; box-shadow:0 2px 10px rgba(100,80,240,.08) }
+body.light .sub-r   { background:#f5f6ff }
+body.light .ai-result { background:rgba(0,0,0,.03) }
+body.light .video-panel { background:linear-gradient(135deg,#f0efff,#fdeef4) }
+body.light .nav     { background:#fff; box-shadow:0 1px 0 #d8daf0 }
+
+/* ── TEAL TUNGI ── */
+body.teal {
+  --bg:#03151c; --s1:#062028; --s2:#0a2d38; --s3:#0f3a48; --bd:#1a5060;
+  --tx:#e0f7fa; --mt:#5b9daa; --ac:#00c9a7; --ac2:#0891b2; --blue:#38bdf8;
+  --grn:#22c55e; --red:#ef4444; --amber:#f59e0b;
+  --g-accent:linear-gradient(135deg,#00c9a7,#0891b2);
+  --g-card:linear-gradient(160deg,#0a2d38,#062028);
+}
+body.teal .hero { background:radial-gradient(ellipse 70% 60% at 10% 30%,rgba(0,201,167,.2) 0%,transparent 55%),radial-gradient(ellipse 50% 40% at 90% 80%,rgba(8,145,178,.15) 0%,transparent 55%),var(--g-card) }
+body.teal .auth-wrap { background:radial-gradient(ellipse 60% 50% at 20% 20%,rgba(0,201,167,.15) 0%,transparent 60%),radial-gradient(ellipse 50% 40% at 80% 80%,rgba(8,145,178,.12) 0%,transparent 60%),var(--bg) }
+body.teal .result-hero { background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(0,201,167,.18),transparent 70%),var(--g-card) }
+body.teal .my-rank { background:radial-gradient(ellipse at 50% 0%,rgba(0,201,167,.15),transparent 70%),var(--g-card); border-color:rgba(0,201,167,.3) }
+body.teal .mr-pos { color:var(--ac) }
+body.teal .rank-row.me { border-color:rgba(0,201,167,.4); background:rgba(0,201,167,.05) }
+body.teal .auth-card.sel { border-color:var(--ac); background:rgba(0,201,167,.08); box-shadow:0 0 0 3px rgba(0,201,167,.15) }
+body.teal .opt.sel { background:rgba(0,201,167,.08); border-color:var(--ac); box-shadow:0 0 0 3px rgba(0,201,167,.1) }
+body.teal .opt.sel .opt-l { background:var(--g-accent) }
+body.teal .nav button.on { box-shadow:0 2px 12px rgba(0,201,167,.3) }
+body.teal .video-panel { border-color:rgba(0,201,167,.4); box-shadow:0 4px 24px rgba(0,201,167,.12) }
+body.teal .btn-primary { background:var(--g-accent); box-shadow:0 4px 16px rgba(0,201,167,.25) }
+body.teal .ytab.on { box-shadow:0 2px 10px rgba(0,201,167,.28) }
+
+/* ── TEAL KUNDUZGI ── */
+body.teal-light {
+  --bg:#f0fdfb; --s1:#ffffff; --s2:#e6faf7; --s3:#ccf5ef; --bd:#99e6da;
+  --tx:#0d3330; --mt:#3d7a70; --ac:#0d9488; --ac2:#0891b2; --blue:#0284c7;
+  --grn:#16a34a; --red:#dc2626; --amber:#d97706;
+  --g-accent:linear-gradient(135deg,#0d9488,#0891b2);
+  --g-card:linear-gradient(160deg,#ffffff,#e6faf7);
+}
+body.teal-light .hero { background:linear-gradient(135deg,#ccfbf1,#bae6fd) }
+body.teal-light .q-card { background:#fff; box-shadow:0 2px 12px rgba(13,148,136,.08) }
+body.teal-light .opt { background:#f0fdfb }
+body.teal-light .opt:hover { background:#ccf5ef }
+body.teal-light .opt.sel { background:#ccfbf1; border-color:var(--ac) }
+body.teal-light .opt.sel .opt-l { background:var(--g-accent) }
+body.teal-light .auth-card.sel { border-color:var(--ac); background:rgba(13,148,136,.08) }
+body.teal-light .nav { background:#fff; box-shadow:0 1px 0 #99e6da }
+body.teal-light .ai-sec { background:linear-gradient(135deg,#f0fdf4,#e6faf7) }
+body.teal-light .sub-r { background:#f0fdfb }
+body.teal-light .video-panel { background:linear-gradient(135deg,#e6faf7,#e0f2fe); border-color:rgba(13,148,136,.3) }
+body.teal-light .result-hero { background:linear-gradient(135deg,#ccfbf1,#e0f2fe) }
+
+/* ── TEMA TUGMALARI ── */
+.theme-switcher { display:flex; gap:5px; padding:4px; background:rgba(255,255,255,.07); border-radius:30px; border:1px solid var(--bd); margin-left:auto; flex-shrink:0 }
+.th-btn { width:26px; height:26px; border-radius:50%; border:2px solid transparent; cursor:pointer; transition:all .2s; font-size:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:transparent }
+.th-btn:hover { transform:scale(1.15) }
+.th-btn.act { border-color:rgba(255,255,255,.8); box-shadow:0 0 0 3px var(--ac) }
+
+* { margin:0; padding:0; box-sizing:border-box }
+body {
+  font-family:'Inter',sans-serif;
+  background:var(--bg);
+  color:var(--tx);
+  min-height:100vh;
+  transition:background .3s,color .3s;
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:640px) {
+  .scr { padding:12px 10px }
+  .r-grid { grid-template-columns:1fr 1fr }
+  .test-hdr { flex-direction:column; gap:10px }
+  .t-timer { width:100%; display:flex; align-items:center; gap:12px }
+  .timer-disp { font-size:26px }
+  .timer-bar-wrap { flex:1; margin-top:0 }
+  .q-actions { flex-wrap:wrap; gap:6px }
+  .qa-end { order:3; width:100% }
+  .hero h2 { font-size:18px }
+  .nav { padding:8px 10px }
+  .nav button { font-size:11px; padding:5px 10px }
+  .all-tests-grid { grid-template-columns:1fr }
+  .q-grid-wrap { gap:5px }
+  .rq-btn { width:40px; height:40px; font-size:11px }
+}
+@media(min-width:641px) {
+  .scr { padding:20px }
+}
+
+/* ── NAV ── */
+.nav {
+  display:flex; gap:5px; padding:10px 16px;
+  background:var(--s1);
+  border-bottom:1px solid var(--bd);
+  overflow-x:auto; position:sticky; top:0; z-index:100; scrollbar-width:none;
+  backdrop-filter:blur(12px);
+}
+.nav::-webkit-scrollbar { display:none }
+.nav button {
+  flex-shrink:0; padding:7px 16px; border-radius:20px;
+  border:1px solid var(--bd); background:transparent;
+  color:var(--mt); font-size:12px; cursor:pointer;
+  white-space:nowrap; transition:all .2s;
+  font-family:inherit; font-weight:500;
+}
+.nav button:hover { color:var(--tx); border-color:var(--ac) }
+.nav button.on {
+  background:var(--g-accent);
+  border-color:transparent; color:#fff; font-weight:700;
+  box-shadow:0 2px 12px rgba(124,106,245,.35);
+}
+
+/* ── SCREENS ── */
+.scr { display:none; max-width:700px; margin:0 auto }
+.scr.on { display:block }
+
+/* ── AUTH ── */
+.auth-wrap {
+  min-height:100vh; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; padding:24px;
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 20%, rgba(124,106,245,.18) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 80% 80%, rgba(232,93,122,.14) 0%, transparent 60%),
+    var(--bg);
+}
+.a-logo {
+  font-size:42px; font-weight:800;
+  background:var(--g-accent);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  margin-bottom:6px; letter-spacing:-2px;
+}
+.a-sub { color:var(--mt); font-size:13px; margin-bottom:32px }
+.a-card {
+  background:var(--s1);
+  border:1px solid var(--bd);
+  border-radius:20px;
+  padding:30px;
+  width:100%; max-width:390px;
+  box-shadow:0 8px 40px rgba(0,0,0,.3);
+}
+.a-card h3 { font-size:18px; font-weight:700; margin-bottom:22px }
+.fld { margin-bottom:14px }
+.fld label { display:block; font-size:11px; color:var(--mt); margin-bottom:5px; font-weight:600; text-transform:uppercase; letter-spacing:.4px }
+.fld input { width:100%; background:var(--bg); border:1px solid var(--bd); border-radius:var(--rs); padding:11px 14px; color:var(--tx); font-size:14px; font-family:inherit; outline:none; transition:border-color .2s }
+.fld input:focus { border-color:var(--ac) }
+.sms-row { display:flex; gap:8px }
+.sms-row input { flex:1 }
+.sms-row button { flex-shrink:0; padding:11px 14px; background:var(--s3); border:1px solid var(--bd); border-radius:var(--rs); color:var(--mt); font-size:11px; cursor:pointer; font-family:inherit; white-space:nowrap; font-weight:600; transition:all .2s }
+.sms-row button:hover { border-color:var(--ac); color:var(--ac) }
+
+/* ── UNIVERSAL BUTTONS ── */
+.btn { width:100%; padding:13px; border-radius:var(--rs); border:none; font-family:inherit; font-size:14px; font-weight:700; cursor:pointer; transition:all .2s }
+.btn-primary { background:var(--g-accent); color:#fff; box-shadow:0 4px 16px rgba(124,106,245,.3) }
+.btn-primary:hover { opacity:.9; transform:translateY(-1px); box-shadow:0 6px 20px rgba(124,106,245,.4) }
+.btn-green { background:var(--g-green); color:#fff; box-shadow:0 4px 14px rgba(34,197,94,.25) }
+.btn-green:hover { opacity:.9; transform:translateY(-1px) }
+.btn-red { background:var(--g-red); color:#fff; box-shadow:0 4px 14px rgba(239,68,68,.25) }
+.btn-red:hover { opacity:.9 }
+.btn-outline { background:transparent; border:1.5px solid var(--bd); color:var(--tx) }
+.btn-outline:hover { border-color:var(--ac); background:rgba(124,106,245,.07) }
+.btn-group { background:rgba(79,156,249,.1); border:1.5px solid rgba(79,156,249,.3); color:var(--blue) }
+.btn-group:hover { background:rgba(79,156,249,.18) }
+
+/* Variant boshlash tugmasi */
+.go-btn {
+  font-size:13px; padding:9px 20px;
+  background:var(--g-green);
+  border:none; border-radius:var(--rs);
+  color:#fff; cursor:pointer; font-family:inherit; font-weight:700;
+  transition:all .2s; white-space:nowrap; flex-shrink:0;
+  box-shadow:0 3px 12px rgba(34,197,94,.3);
+}
+.go-btn:hover { opacity:.9; transform:translateY(-1px); box-shadow:0 5px 16px rgba(34,197,94,.4) }
+
+/* ── CARDS ── */
+.card { background:var(--s1); border:1px solid var(--bd); border-radius:var(--r); padding:16px; margin-bottom:10px }
+
+/* ── HERO ── */
+.hero {
+  background:
+    radial-gradient(ellipse 70% 60% at 10% 30%, rgba(124,106,245,.22) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 90% 80%, rgba(232,93,122,.16) 0%, transparent 55%),
+    var(--g-card);
+  border:1px solid var(--bd);
+  border-radius:20px; padding:22px; margin-bottom:18px;
+}
+.hero h2 { font-size:22px; font-weight:800; letter-spacing:-.4px; margin-bottom:4px }
+.hero p { font-size:13px; color:var(--mt) }
+.hero-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:16px }
+.hs {
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:12px; padding:14px; text-align:center;
+}
+.hs .v { font-size:22px; font-weight:800; font-family:'JetBrains Mono',monospace }
+.hs .l { font-size:10px; color:var(--mt); margin-top:3px }
+
+.sec-title { font-size:11px; font-weight:700; color:var(--mt); text-transform:uppercase; letter-spacing:.9px; margin:16px 0 10px }
+
+/* ── TAGS ── */
+.tag { font-size:10px; padding:3px 9px; border-radius:12px; font-weight:600 }
+.tag-free { background:rgba(34,197,94,.15); color:#4ade80 }
+.tag-paid { background:rgba(232,93,122,.12); color:#fb7185 }
+.tag-grp  { background:rgba(79,156,249,.12); color:var(--blue) }
+.tag-ai   { background:rgba(124,106,245,.12); color:#c4b5fd }
+
+/* ── CARDS ── */
+.card {
+  background:var(--g-card);
+  border:1px solid var(--bd);
+  border-radius:18px; padding:18px; margin-bottom:12px;
+  transition:border-color .2s, box-shadow .2s;
+}
+.card:hover { border-color:rgba(124,106,245,.4); box-shadow:0 4px 24px rgba(124,106,245,.1) }
+
+/* ── MUALLIF ── */
+.author-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px }
+.auth-card {
+  background:var(--s2); border:1.5px solid var(--bd);
+  border-radius:14px; padding:14px; cursor:pointer; transition:all .2s;
+}
+.auth-card:hover { border-color:rgba(124,106,245,.5); background:var(--s3) }
+.auth-card.sel {
+  border-color:var(--ac); background:rgba(124,106,245,.08);
+  box-shadow:0 0 0 3px rgba(124,106,245,.15);
+}
+.an { font-size:13px; font-weight:700; margin-bottom:3px }
+.am { font-size:11px; color:var(--mt) }
+
+/* ── YILLAR ── */
+.year-tabs { display:flex; gap:7px; overflow-x:auto; padding-bottom:4px; margin-bottom:14px; scrollbar-width:none }
+.year-tabs::-webkit-scrollbar { display:none }
+.ytab {
+  flex-shrink:0; padding:7px 16px; border-radius:20px;
+  border:1px solid var(--bd); background:transparent;
+  color:var(--mt); font-size:12px; cursor:pointer;
+  font-family:inherit; transition:all .2s; font-weight:600;
+}
+.ytab:hover { border-color:var(--ac); color:var(--tx) }
+.ytab.on { background:var(--g-accent); border-color:transparent; color:#fff; box-shadow:0 2px 10px rgba(124,106,245,.3) }
+
+/* ── VARIANT ROW ── */
+.var-row {
+  background:var(--s2); border:1px solid var(--bd);
+  border-radius:12px; padding:13px 16px;
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:8px; cursor:pointer; transition:all .2s; gap:10px;
+}
+.var-row:hover { border-color:var(--ac); background:var(--s3); transform:translateX(3px) }
+.var-name { font-size:14px; font-weight:600 }
+.var-meta { font-size:11px; color:var(--mt); margin-top:2px }
+.price-badge {
+  font-size:11px; color:var(--amber); font-weight:700;
+  background:rgba(245,158,11,.1); border:1px solid rgba(245,158,11,.2);
+  padding:4px 10px; border-radius:8px; white-space:nowrap;
+}
+
+/* ── INFO BOXES ── */
+.info-box { background:rgba(79,156,249,.06); border:1px solid rgba(79,156,249,.2); border-radius:var(--rs); padding:12px 14px; margin-bottom:12px; font-size:12px; color:var(--blue); line-height:1.6 }
+.info-box strong { color:var(--tx) }
+.warn-box { background:rgba(245,158,11,.06); border:1px solid rgba(245,158,11,.2); border-radius:var(--rs); padding:11px 14px; font-size:12px; color:var(--amber); margin-bottom:12px; line-height:1.5 }
+.free-box { background:rgba(34,197,94,.06); border:1px solid rgba(34,197,94,.2); border-radius:var(--rs); padding:11px 14px; font-size:12px; color:#4ade80; margin-bottom:12px; line-height:1.5 }
+.ai-box { background:rgba(124,106,245,.06); border:1px solid rgba(124,106,245,.2); border-radius:var(--rs); padding:11px 14px; font-size:12px; color:#c4b5fd; margin-bottom:12px; line-height:1.5 }
+
+/* ── RANDOM INFO ── */
+.ri { background:rgba(79,156,249,.06); border:1px solid rgba(79,156,249,.15); border-radius:var(--rs); padding:11px 14px; margin-bottom:12px }
+.ri-title { font-size:11px; font-weight:700; color:var(--blue); margin-bottom:7px }
+.ri-row { display:flex; justify-content:space-between; font-size:11px; padding:4px 0; border-bottom:1px solid rgba(46,50,96,.5) }
+.ri-row:last-child { border:none }
+
+/* ── TEST HEADER ── */
+.test-hdr { background:var(--s1); border:1px solid var(--bd); border-radius:18px; padding:16px 20px; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 16px rgba(0,0,0,.18) }
+.t-info .t-name { font-size:13px; font-weight:700; margin-bottom:2px }
+.t-info .t-sub { font-size:11px; color:var(--mt) }
+.t-timer { text-align:right }
+.timer-disp { font-family:'JetBrains Mono',monospace; font-size:26px; font-weight:700; color:var(--amber); letter-spacing:1px; line-height:1 }
+.timer-lbl { font-size:9px; color:var(--mt); margin-top:2px }
+.timer-bar-wrap { height:3px; background:var(--bd); border-radius:2px; margin-top:6px; overflow:hidden }
+.timer-bar-fill { height:3px; border-radius:2px; transition:width 1s linear }
+
+/* ── SAVOL NAV ── */
+.q-nav { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:6px }
+.qn { width:34px; height:34px; border-radius:var(--rs); border:1px solid var(--bd); background:var(--s3); color:var(--mt); font-size:11px; font-weight:700; cursor:pointer; transition:all .2s; font-family:'JetBrains Mono',monospace; display:flex; align-items:center; justify-content:center }
+.qn:hover { border-color:var(--blue) }
+.qn.ans { background:rgba(39,174,96,.15); border-color:rgba(39,174,96,.4); color:#4ade80 }
+.qn.cur { background:var(--ac); border-color:var(--ac); color:#fff }
+.qn.ai { background:rgba(168,85,247,.15); border-color:rgba(168,85,247,.4); color:#c084fc }
+.qn.bkm { background:rgba(243,156,18,.12); border-color:rgba(243,156,18,.35); color:var(--amber) }
+.q-legend { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px }
+.ql { font-size:10px; padding:3px 8px; border-radius:6px; font-weight:600 }
+.ql-a { background:rgba(39,174,96,.12); color:#4ade80 }
+.ql-ai { background:rgba(168,85,247,.12); color:#c084fc }
+.ql-b { background:rgba(243,156,18,.1); color:var(--amber) }
+
+/* ── SAVOL KARTA ── */
+.q-card { background:var(--g-card); border:1px solid var(--bd); border-radius:18px; padding:22px; margin-bottom:14px; box-shadow:0 2px 16px rgba(0,0,0,.15) }
+.q-num { font-size:11px; color:var(--blue); font-weight:700; letter-spacing:.5px; margin-bottom:8px }
+.q-badges { display:flex; gap:5px; margin-bottom:10px }
+.qbdg { font-size:10px; padding:2px 8px; border-radius:6px; font-weight:600 }
+/* qiyinlik darajalari foydalanuvchiga ko'rsatilmaydi */
+.qbdg.qb-hard,.qbdg.qb-mid,.qbdg.qb-easy { display:none }
+.qb-img { background:rgba(74,144,217,.12); color:var(--blue) }
+.qb-graph { background:rgba(168,85,247,.12); color:#c084fc }
+.qb-text { background:rgba(39,174,96,.1); color:#34d399 }
+.q-text { font-size:15px; line-height:1.7; margin-bottom:16px }
+.q-formula { font-family:'JetBrains Mono',monospace; font-size:14px; color:#67e8f9; background:rgba(74,144,217,.06); border:1px solid rgba(74,144,217,.15); border-radius:var(--rs); padding:11px 14px; margin-bottom:14px; line-height:1.7 }
+.q-img-ph { background:var(--s3); border:1px dashed var(--bd); border-radius:var(--rs); height:160px; display:flex; align-items:center; justify-content:center; color:var(--mt); font-size:13px; margin-bottom:14px }
+
+/* ── VARIANTLAR ── */
+.opts { display:flex; flex-direction:column; gap:8px }
+.opt { display:flex; align-items:center; gap:12px; padding:13px 16px; background:var(--s2); border:1.5px solid var(--bd); border-radius:12px; cursor:pointer; transition:all .2s }
+.opt:hover { border-color:rgba(124,106,245,.5); background:var(--s3) }
+.opt.sel { background:rgba(124,106,245,.1); border-color:var(--ac); box-shadow:0 0 0 3px rgba(124,106,245,.1) }
+.opt-l { width:30px; height:30px; border-radius:8px; background:var(--bd); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; font-family:'JetBrains Mono',monospace; flex-shrink:0; color:var(--mt); transition:all .2s }
+.opt.sel .opt-l { background:var(--g-accent); color:#fff }
+.opt-tx { font-size:14px }
+
+/* ── MATN KIRITISH ── */
+.tinp { width:100%; background:var(--s3); border:1.5px solid var(--bd); border-radius:var(--rs); padding:11px 14px; color:var(--tx); font-size:13px; font-family:inherit; resize:none; outline:none; min-height:55px; line-height:1.5 }
+.tinp:focus { border-color:var(--blue) }
+
+/* ── AI UPLOAD ── */
+.ai-sec { background:linear-gradient(135deg,#1a0a2e,#0a1228); border:1px solid rgba(168,85,247,.25); border-radius:var(--r); padding:18px; margin-bottom:14px }
+.ai-title { font-size:14px; font-weight:700; color:#c084fc; margin-bottom:6px }
+.ai-desc { font-size:12px; color:#7c5ea0; margin-bottom:14px; line-height:1.6 }
+.upload-zone { border:2px dashed rgba(168,85,247,.4); border-radius:var(--rs); padding:22px; text-align:center; cursor:pointer; transition:all .2s }
+.upload-zone:hover { border-color:#9b72ff; background:rgba(168,85,247,.06) }
+.uz-ic { font-size:30px; margin-bottom:8px }
+.uz-tx { font-size:13px; color:#c084fc; font-weight:700 }
+.uz-sub { font-size:11px; color:var(--mt); margin-top:4px }
+.ai-checking { background:rgba(168,85,247,.08); border:1px solid rgba(168,85,247,.25); border-radius:var(--rs); padding:14px; margin-top:10px; display:flex; align-items:center; gap:12px }
+.ai-spinner { width:20px; height:20px; border:2px solid rgba(168,85,247,.3); border-top-color:#c084fc; border-radius:50%; animation:spin .8s linear infinite; flex-shrink:0 }
+@keyframes spin { to { transform:rotate(360deg) } }
+.ai-checking-txt { font-size:13px; color:#c084fc; font-weight:600 }
+.ai-checking-sub { font-size:11px; color:var(--mt); margin-top:2px }
+.ai-result { background:rgba(0,0,0,.2); border-radius:var(--rs); padding:14px; margin-top:10px }
+.ai-score { font-size:22px; font-weight:800; font-family:'JetBrains Mono',monospace }
+.ai-score.full { color:var(--grn) }
+.ai-score.partial { color:var(--amber) }
+.ai-score.wrong { color:var(--red) }
+.ai-note { font-size:12px; color:var(--mt); line-height:1.5; margin:6px 0 8px }
+.sub-grid { display:flex; flex-direction:column; gap:5px }
+.sub-r { display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--s1); border-radius:7px; font-size:12px }
+.sub-r .sl { flex:1; color:var(--mt) }
+.sub-r .sv { font-weight:800; font-family:'JetBrains Mono',monospace }
+
+/* ── Q ACTIONS (test ichida) ── */
+.q-actions { display:flex; gap:8px; margin-bottom:16px; align-items:stretch }
+.qa-prev { padding:11px 16px; background:var(--s1); border:1.5px solid var(--bd); border-radius:var(--rs); color:var(--tx); font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:all .2s }
+.qa-prev:hover { border-color:var(--blue) }
+.qa-bkm { padding:11px 13px; background:var(--s1); border:1.5px solid var(--bd); border-radius:var(--rs); font-size:16px; cursor:pointer; flex-shrink:0 }
+.qa-next { flex:1; min-width:90px; background:var(--g-green); border:none; border-radius:var(--rs); padding:11px; color:#fff; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; transition:all .2s; box-shadow:0 2px 12px rgba(34,197,94,.25) }
+.qa-next:hover { opacity:.9 }
+.qa-end { padding:11px 18px; background:var(--g-red); border:none; border-radius:var(--rs); color:#fff; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:all .2s; box-shadow:0 2px 12px rgba(239,68,68,.25) }
+.qa-end:hover { opacity:.9 }
+
+/* ── NATIJA HERO ── */
+.result-hero { background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(124,106,245,.18),transparent 70%), var(--g-card); border:1px solid var(--bd); border-radius:20px; padding:28px; text-align:center; margin-bottom:18px; box-shadow:0 4px 24px rgba(0,0,0,.2) }
+.r-score { font-size:60px; font-weight:800; font-family:'JetBrains Mono',monospace; background:var(--g-accent); -webkit-background-clip:text; -webkit-text-fill-color:transparent; line-height:1 }
+.r-label { font-size:13px; color:var(--mt); margin-top:7px }
+.r-tags { display:flex; gap:7px; justify-content:center; margin-top:12px; flex-wrap:wrap }
+.r-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:9px; margin-bottom:16px }
+.r-item { background:var(--g-card); border:1px solid var(--bd); border-radius:14px; padding:14px; text-align:center; transition:all .2s } .r-item:hover { border-color:rgba(124,106,245,.3) }
+.r-val { font-size:20px; font-weight:800; font-family:'JetBrains Mono',monospace }
+.r-lbl { font-size:10px; color:var(--mt); margin-top:3px }
+
+/* ── NATIJA SAVOL TUGMALARI ── */
+.q-grid-wrap { display:flex; flex-wrap:wrap; gap:7px; margin-bottom:14px }
+.rq-btn { width:46px; height:46px; border-radius:var(--rs); font-size:12px; font-weight:700; font-family:'JetBrains Mono',monospace; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; border:none; transition:all .2s; gap:1px }
+.rq-btn.ok { background:rgba(39,174,96,.15); color:#4ade80; border:1.5px solid rgba(39,174,96,.35) }
+.rq-btn.ng { background:rgba(231,76,60,.15); color:#f87171; border:1.5px solid rgba(231,76,60,.35) }
+.rq-btn.ai-check { background:rgba(168,85,247,.12); color:#c084fc; border:1.5px solid rgba(168,85,247,.3) }
+.rq-btn:hover { transform:scale(1.1); z-index:2 }
+.rq-btn.has-video::after { content:'▶'; display:block; font-size:8px; opacity:.75; line-height:1 }
+.q-grid-hint { background:var(--s1); border:1px solid var(--bd); border-radius:var(--rs); padding:10px 14px; margin-bottom:12px; font-size:11px; color:var(--mt); display:flex; align-items:center; gap:8px; flex-wrap:wrap }
+.q-grid-legend { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px }
+.qgl { font-size:10px; padding:3px 9px; border-radius:6px; font-weight:600 }
+
+/* ── VIDEO PANEL ── */
+.video-panel { background:linear-gradient(135deg,#131528,#1a1232); border:2px solid rgba(124,106,245,.4); border-radius:18px; padding:20px; margin:16px 0; display:none; box-shadow:0 4px 24px rgba(124,106,245,.15) }
+.video-panel.show { display:block }
+.vp-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px }
+.vp-title { font-size:14px; font-weight:700; color:#93c5fd }
+.vp-close { background:rgba(231,76,60,.12); border:1px solid rgba(231,76,60,.3); color:var(--red); font-size:12px; cursor:pointer; border-radius:7px; padding:5px 12px; font-family:inherit; font-weight:700 }
+.vp-close:hover { background:rgba(231,76,60,.22) }
+.vp-player { background:#000; border-radius:var(--rs); height:130px; display:flex; align-items:center; justify-content:center; border:1px solid var(--bd); margin-bottom:12px; cursor:pointer }
+.vp-player:hover .vp-play-btn { transform:scale(1.08) }
+.vp-play-btn { width:52px; height:52px; border-radius:50%; background:rgba(231,76,60,.9); display:flex; align-items:center; justify-content:center; font-size:20px; transition:all .2s; color:#fff; font-weight:700 }
+.tg-info { display:flex; align-items:center; gap:8px; font-size:11px; color:var(--mt) }
+.tg-dot { width:7px; height:7px; border-radius:50%; background:#2aabee; box-shadow:0 0 6px #2aabee }
+.vp-no-video { background:rgba(231,76,60,.06); border:1px solid rgba(231,76,60,.18); border-radius:var(--rs); padding:16px; text-align:center; margin-bottom:10px }
+.vp-no-video .nv-ic { font-size:28px; margin-bottom:6px }
+.vp-no-video .nv-tx { font-size:13px; color:var(--red); font-weight:600 }
+.vp-no-video .nv-sub { font-size:11px; color:var(--mt); margin-top:4px }
+
+/* ── REYTING ── */
+.rank-filters { display:flex; gap:7px; margin-bottom:14px }
+.rf { flex:1; padding:9px; border-radius:var(--rs); border:1.5px solid var(--bd); background:transparent; color:var(--mt); font-size:12px; cursor:pointer; font-family:inherit; transition:all .2s; font-weight:600; text-align:center }
+.rf.on { background:var(--g-accent); border-color:transparent; color:#fff; box-shadow:0 2px 10px rgba(124,106,245,.3) }
+.my-rank { background:radial-gradient(ellipse at 50% 0%,rgba(124,106,245,.15),transparent 70%), var(--g-card); border:1px solid rgba(124,106,245,.3); border-radius:18px; padding:18px; text-align:center; margin-bottom:14px }
+.mr-pos { font-size:36px; font-weight:800; font-family:'JetBrains Mono',monospace; color:var(--ac) }
+.mr-sub { font-size:12px; color:var(--mt); margin-top:4px }
+.rank-row { display:flex; align-items:center; gap:11px; padding:13px 16px; background:var(--g-card); border:1px solid var(--bd); border-radius:14px; margin-bottom:8px; transition:all .2s }
+.rank-row.me { border-color:rgba(124,106,245,.4); background:rgba(124,106,245,.06); box-shadow:0 2px 12px rgba(124,106,245,.12) }
+.rk-pos { font-size:15px; font-weight:800; font-family:'JetBrains Mono',monospace; width:30px; flex-shrink:0 }
+.rk-av { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; flex-shrink:0 }
+.rk-name { flex:1 }
+.rk-name span { font-size:14px; font-weight:600; display:block }
+.rk-name small { font-size:11px; color:var(--mt) }
+.rk-ball { font-size:16px; font-weight:800; font-family:'JetBrains Mono',monospace; color:var(--ac) }
+
+/* ── GURUH ── */
+.g-card { background:var(--s1); border:1px solid var(--bd); border-radius:var(--r); padding:16px; margin-bottom:11px }
+.g-head { display:flex; align-items:flex-start; gap:12px; margin-bottom:14px }
+.g-ic { width:44px; height:44px; border-radius:11px; background:linear-gradient(135deg,#1d4ed8,#0891b2); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0 }
+.g-info h4 { font-size:15px; font-weight:700 }
+.g-info p { font-size:12px; color:var(--mt); margin-top:3px }
+.g-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px }
+.g-btn { padding:10px; border-radius:var(--rs); border:1.5px solid var(--bd); background:transparent; color:var(--tx); font-size:12px; font-weight:600; cursor:pointer; font-family:inherit; transition:all .2s; text-align:center }
+.g-btn:hover { border-color:var(--blue); background:var(--s3) }
+.g-btn.pri { background:linear-gradient(135deg,#27ae60,#1e8449); border-color:transparent; color:#fff }
+.dl-badge { display:inline-flex; align-items:center; gap:5px; font-size:10px; background:rgba(243,156,18,.1); color:var(--amber); padding:3px 9px; border-radius:12px; font-weight:600 }
+
+/* ── STATISTIKA ── */
+.weekly { background:var(--s1); border:1px solid var(--bd); border-radius:var(--r); padding:16px; margin-bottom:14px }
+.weekly h4 { font-size:14px; font-weight:700; margin-bottom:14px }
+.chart-bars { display:flex; align-items:flex-end; gap:8px; height:80px; margin-bottom:8px }
+.bar-w { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px }
+.bar { width:100%; border-radius:4px 4px 0 0; min-height:4px }
+.bd { font-size:10px; color:var(--mt) }
+.prog-list { background:var(--s1); border:1px solid var(--bd); border-radius:var(--r); padding:16px }
+.prog-list h4 { font-size:14px; font-weight:700; margin-bottom:14px }
+.pr { margin-bottom:14px }
+.pr-head { display:flex; justify-content:space-between; margin-bottom:6px }
+.pr-head span { font-size:13px; font-weight:500 }
+.pr-head small { font-size:12px; color:var(--mt); font-family:'JetBrains Mono',monospace }
+.pr-bar { background:var(--bg); border-radius:4px; height:8px; overflow:hidden }
+.pr-fill { height:8px; border-radius:4px }
+
+/* ── MISC ── */
+.back-btn { display:flex; align-items:center; gap:7px; color:var(--mt); font-size:13px; cursor:pointer; margin-bottom:16px; background:none; border:none; font-family:inherit; padding:0 }
+.back-btn:hover { color:var(--tx) }
+.divider { height:1px; background:var(--bd); margin:16px 0 }
+.to-pay-bar { display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--s1); border:1px solid var(--bd); border-radius:var(--rs); padding:12px 16px; margin-bottom:8px }
+.to-pay-bar .info { font-size:12px; color:var(--mt) }
+.to-pay-bar .price2 { font-size:15px; font-weight:800; color:var(--amber); font-family:'JetBrains Mono',monospace; white-space:nowrap }
+.pay-methods { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-bottom:14px }
+.pm { background:var(--s3); border:2px solid var(--bd); border-radius:var(--rs); padding:16px; text-align:center; cursor:pointer; transition:all .2s }
+.pm:hover, .pm.sel { border-color:var(--blue) }
+.pm-ic { font-size:28px; margin-bottom:6px }
+.pm-nm { font-size:14px; font-weight:700 }
+.pm-sub { font-size:11px; color:var(--mt); margin-top:2px }
+.pay-total { display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-top:1px solid var(--bd); margin-bottom:16px }
+.pay-total span { font-size:13px; color:var(--mt) }
+.pay-total strong { font-size:24px; font-weight:800; font-family:'JetBrains Mono',monospace; color:var(--blue) }
+</style>
+</head>
+<body>
+
+<nav class="nav" id="mainNav">
+  <button class="on" onclick="go('auth')">🔐 Kirish</button>
+  <button onclick="go('home')">🏠 Asosiy</button>
+  <button onclick="go('tests')">📋 Testlar</button>
+  <button onclick="go('test-dtm')">✏️ Test (DTM)</button>
+  <button onclick="go('test-atest')">✏️ Test (Atest)</button>
+  <button onclick="go('test-sert')">✏️ Test (Sert)</button>
+  <button onclick="go('result-dtm')">📊 Natija DTM</button>
+  <button onclick="go('result-atest')">📊 Natija Atest</button>
+  <button onclick="go('result-sert')">📊 Natija Sert</button>
+  <button onclick="go('rating')">🏆 Reyting</button>
+  <button onclick="go('stats')">📈 Statistika</button>
+  <div class="theme-switcher">
+    <button class="th-btn act" id="th0" onclick="setTheme(0)" title="Tungi (Indigo)" style="background:linear-gradient(135deg,#13152b,#1b1e38)">🌙</button>
+    <button class="th-btn"     id="th1" onclick="setTheme(1)" title="Kunduzgi (Indigo)" style="background:linear-gradient(135deg,#eef0ff,#f5f6ff)">☀️</button>
+    <button class="th-btn"     id="th2" onclick="setTheme(2)" title="Tungi (Teal)" style="background:linear-gradient(135deg,#062028,#0a2d38)">🌊</button>
+    <button class="th-btn"     id="th3" onclick="setTheme(3)" title="Kunduzgi (Teal)" style="background:linear-gradient(135deg,#ccfbf1,#e0f2fe)">🌿</button>
+  </div>
+</nav>
+
+<!-- ===================== AUTH ===================== -->
+<div id="s-auth" class="scr on">
+  <div class="auth-wrap">
+    <div class="a-logo">TestHub</div>
+    <div class="a-sub">Kimyo testlar platformasi</div>
+    <div class="a-card">
+      <h3>Kirish / Ro'yxatdan o'tish</h3>
+      <div class="fld"><label>Ism</label><input type="text" placeholder="Sobirbek" /></div>
+      <div class="fld"><label>Familiya</label><input type="text" placeholder="Toshtemirov" /></div>
+      <div class="fld"><label>Telefon</label>
+        <div class="sms-row"><input type="tel" placeholder="+998 90 123 45 67" /><button>SMS →</button></div>
+      </div>
+      <div class="fld"><label>SMS kod</label><input type="text" placeholder="• • • • • •" maxlength="6" /></div>
+      <button class="btn btn-primary" onclick="go('home')">Kirish →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== HOME ===================== -->
+<div id="s-home" class="scr">
+  <div class="hero">
+    <h2>Assalomu alaykum, Sobirbek 👋</h2>
+    <p>Bugun ham bir test ishlang</p>
+    <div class="hero-stats">
+      <div class="hs"><div class="v" style="color:var(--ac)">47</div><div class="l">Testlar</div></div>
+      <div class="hs"><div class="v" style="color:var(--blue)">78%</div><div class="l">O'rtacha</div></div>
+      <div class="hs"><div class="v" style="color:var(--amber)">#12</div><div class="l">Reyting</div></div>
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="go('tests')" style="margin-bottom:10px">📋 Barcha testlar →</button>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+    <button class="btn btn-outline" onclick="go('rating')">🏆 Reyting</button>
+    <button class="btn btn-outline" onclick="go('stats')">📈 Statistika</button>
+  </div>
+</div>
+
+<!-- ===================== BARCHA TESTLAR ===================== -->
+<div id="s-tests" class="scr">
+  <div class="sec-title">Barcha testlar</div>
+
+  <!-- MILLIY SERTIFIKAT -->
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <span style="font-size:26px">📗</span>
+      <div>
+        <div style="font-size:15px;font-weight:700">Milliy Sertifikat</div>
+        <div style="font-size:12px;color:var(--mt)">4 muallif • 43 savol • 4 soat</div>
+        <div style="margin-top:5px;display:flex;gap:6px"><span class="tag tag-free">BEPUL</span><span class="tag tag-ai">🤖 AI tekshiruv</span></div>
+      </div>
+    </div>
+    <div class="free-box" style="margin-bottom:10px">41–43 savollar rasm orqali yuboriladi — Gemini AI tekshiradi</div>
+    <div class="author-grid">
+      <div class="auth-card sel" onclick="selAuth(this)"><div class="an">Sohibjon Boboyev</div><div class="am">15 variant • 43 savol</div></div>
+      <div class="auth-card" onclick="selAuth(this)"><div class="an">Maruf Tongotarov</div><div class="am">12 variant • 43 savol</div></div>
+      <div class="auth-card" onclick="selAuth(this)"><div class="an">Samarqand 30+30</div><div class="am">10 variant • 43 savol</div></div>
+      <div class="auth-card" onclick="selAuth(this)"><div class="an">Abdullayev X.</div><div class="am">8 variant • 43 savol</div></div>
+    </div>
+    <div class="sec-title" style="margin-top:4px">Variant tanlang</div>
+    <div class="var-row" onclick="startTest('sert',1)"><div><div class="var-name">1-variant</div><div class="var-meta">43 savol • 4 soat taymer</div></div><button class="go-btn">Boshlash</button></div>
+    <div class="var-row" onclick="startTest('sert',2)"><div><div class="var-name">2-variant</div></div><button class="go-btn">Boshlash</button></div>
+    <div class="var-row" onclick="startTest('sert',3)"><div><div class="var-name">3-variant</div></div><button class="go-btn">Boshlash</button></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- DTM -->
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <span style="font-size:26px">🔴</span>
+      <div>
+        <div style="font-size:15px;font-weight:700">DTM Testlari</div>
+        <div style="font-size:12px;color:var(--mt)">2020–2025 • 30 savol • 60 daqiqa</div>
+        <div style="margin-top:5px"><span class="tag tag-paid">5 000 so'm/variant</span></div>
+      </div>
+    </div>
+    <!-- O'zingizni sinang -->
+    <div style="background:rgba(233,69,96,.07);border:1px solid rgba(233,69,96,.2);border-radius:var(--rs);padding:13px;margin-bottom:12px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+        <div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:8px">💡 O'zingizni sinang</div>
+          <div style="font-size:11px;color:var(--mt);margin-bottom:10px">30 ta random savol • 60 daqiqa</div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <span class="tag tag-paid">5 000 so'm</span>
+            <span class="tag tag-grp">Guruhda ✓</span>
+          </div>
+        </div>
+        <button class="go-btn" onclick="startTest('dtm-sinov',0)" style="margin-top:4px">Boshlash</button>
+      </div>
+    </div>
+    <!-- Yillar -->
+    <div class="year-tabs">
+      <button class="ytab on" onclick="setYear(this,'2020')">2020</button>
+      <button class="ytab" onclick="setYear(this,'2021')">2021</button>
+      <button class="ytab" onclick="setYear(this,'2022')">2022</button>
+      <button class="ytab" onclick="setYear(this,'2023')">2023</button>
+      <button class="ytab" onclick="setYear(this,'2024')">2024</button>
+      <button class="ytab" onclick="setYear(this,'2025')">2025</button>
+    </div>
+    <div id="dtm-var-list"></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ATESTATSIYA -->
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <span style="font-size:26px">🎓</span>
+      <div>
+        <div style="font-size:15px;font-weight:700">Atestatsiya</div>
+        <div style="font-size:12px;color:var(--mt)">35 savol • 120 daqiqa</div>
+        <div style="margin-top:5px;display:flex;gap:6px"><span class="tag tag-paid">5 000 so'm</span><span class="tag tag-grp">Guruhda</span></div>
+      </div>
+    </div>
+    <div class="info-box" style="margin-bottom:10px"><strong>Format:</strong> 3 rasmli + 3 grafikli + 3 nazariy + 26 yozma savol</div>
+    <div id="atest-var-list"></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- MAVZULAR -->
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <span style="font-size:26px">📌</span>
+      <div>
+        <div style="font-size:15px;font-weight:700">Mavzulashtirilgan testlar</div>
+        <div style="font-size:12px;color:var(--mt)">Admin ochganda ko'rinadi</div>
+      </div>
+    </div>
+    <div class="var-row"><div><div class="var-name">Organik kimyo</div><div class="var-meta">20 savol • 45 daqiqa</div><div style="margin-top:4px;display:flex;gap:5px"><span class="tag tag-grp">Guruhda</span><span class="dl-badge">⏰ 20-iyun</span></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px"><span class="price-badge">3 000 so'm</span><button class="go-btn">Boshlash</button></div></div>
+    <div class="var-row"><div><div class="var-name">Anorganik kimyo</div><div class="var-meta">25 savol • 60 daqiqa</div><div style="margin-top:4px"><span class="tag tag-grp">Guruhda</span></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px"><span class="price-badge">3 000 so'm</span><button class="go-btn">Boshlash</button></div></div>
+  </div>
+</div>
+
+<!-- ===================== TEST — DTM ===================== -->
+<div id="s-test-dtm" class="scr">
+  <div class="test-hdr">
+    <div class="t-info">
+      <div class="t-name" id="dtm-test-name">DTM 2023 — 5-variant</div>
+      <div class="t-sub">30 savol • 60 daqiqa</div>
+    </div>
+    <div class="t-timer">
+      <div class="timer-disp" id="timer-dtm">60:00</div>
+      <div class="timer-lbl">qoldi</div>
+      <div class="timer-bar-wrap"><div class="timer-bar-fill" id="tbar-dtm" style="width:100%;background:linear-gradient(90deg,var(--blue),var(--ac2))"></div></div>
+    </div>
+  </div>
+  <div class="q-nav" id="qnav-dtm"></div>
+  <div class="q-legend">
+    <span class="ql ql-a">✓ Javob berilgan</span>
+    <span class="ql ql-b">📌 Belgilangan</span>
+  </div>
+  <div class="q-card">
+    <div class="q-num">5-savol / 30</div>
+    <div class="q-badges"><span class="qbdg qb-mid">O'rta</span><span class="qbdg qb-text">Yozma</span></div>
+    <div class="q-text">Quyidagi reaksiyada CH₄ to'liq yonishida nechta mol H₂O hosil bo'ladi?</div>
+    <div class="q-formula">CH₄ + 2O₂ → CO₂ + 2H₂O</div>
+    <div class="opts">
+      <div class="opt" onclick="selOpt(this)"><div class="opt-l">A</div><div class="opt-tx">1 mol</div></div>
+      <div class="opt sel" onclick="selOpt(this)"><div class="opt-l">B</div><div class="opt-tx">2 mol</div></div>
+      <div class="opt" onclick="selOpt(this)"><div class="opt-l">C</div><div class="opt-tx">3 mol</div></div>
+      <div class="opt" onclick="selOpt(this)"><div class="opt-l">D</div><div class="opt-tx">4 mol</div></div>
+    </div>
+  </div>
+  <div class="q-actions">
+    <button class="qa-prev">← Oldingi</button>
+    <button class="qa-bkm">📌</button>
+    <button class="qa-next">Keyingi →</button>
+    <button class="qa-end" onclick="go('result-dtm')">Yakunlash</button>
+  </div>
+</div>
+
+<!-- ===================== TEST — ATESTATSIYA ===================== -->
+<div id="s-test-atest" class="scr">
+  <div class="test-hdr">
+    <div class="t-info">
+      <div class="t-name">Atestatsiya — 3-variant</div>
+      <div class="t-sub">35 savol • 120 daqiqa</div>
+    </div>
+    <div class="t-timer">
+      <div class="timer-disp" id="timer-atest">2:00:00</div>
+      <div class="timer-lbl">qoldi</div>
+      <div class="timer-bar-wrap"><div class="timer-bar-fill" id="tbar-atest" style="width:100%;background:linear-gradient(90deg,var(--amber),var(--ac))"></div></div>
+    </div>
+  </div>
+  <div class="q-nav" id="qnav-atest"></div>
+  <div class="q-legend">
+    <span class="ql ql-a">✓ Javob berilgan</span>
+    <span class="ql ql-b">📌 Belgilangan</span>
+  </div>
+  <div class="q-card">
+    <div class="q-num">3-savol / 35</div>
+    <div class="q-badges"><span class="qbdg qb-hard">Qiyin</span><span class="qbdg qb-img">Rasmli</span></div>
+    <div class="q-text">Rasmda ko'rsatilgan kristall panjara turini aniqlang.</div>
+    <div class="q-img-ph">🖼 Rasm joylashtiriladi</div>
+    <div class="opts">
+      <div class="opt" onclick="selOpt(this)"><div class="opt-l">A</div><div class="opt-tx">Atom panjara</div></div>
+      <div class="opt sel" onclick="selOpt(this)"><div class="opt-l">B</div><div class="opt-tx">Ion panjara</div></div>
+      <div class="opt" onclick="selOpt(this)"><div class="opt-l">C</div><div class="opt-tx">Molekulyar panjara</div></div>
+      <div class="opt" onclick="selOpt(this)"><div class="opt-l">D</div><div class="opt-tx">Metall panjara</div></div>
+    </div>
+  </div>
+  <div class="q-actions">
+    <button class="qa-prev">← Oldingi</button>
+    <button class="qa-bkm">📌</button>
+    <button class="qa-next">Keyingi →</button>
+    <button class="qa-end" onclick="go('result-atest')">Yakunlash</button>
+  </div>
+</div>
+
+<!-- ===================== TEST — SERTIFIKAT ===================== -->
+<div id="s-test-sert" class="scr">
+  <div class="test-hdr">
+    <div class="t-info">
+      <div class="t-name">Sohibjon Boboyev — 1-variant</div>
+      <div class="t-sub">43 savol • 240 daqiqa (4 soat)</div>
+    </div>
+    <div class="t-timer">
+      <div class="timer-disp" id="timer-sert">4:00:00</div>
+      <div class="timer-lbl">qoldi</div>
+      <div class="timer-bar-wrap"><div class="timer-bar-fill" id="tbar-sert" style="width:100%;background:linear-gradient(90deg,var(--grn),var(--blue))"></div></div>
+    </div>
+  </div>
+  <div class="q-nav" id="qnav-sert"></div>
+  <div class="q-legend">
+    <span class="ql ql-a">✓ Javob berilgan</span>
+    <span class="ql ql-ai">🤖 AI savol (41–43)</span>
+    <span class="ql ql-b">📌 Belgilangan</span>
+  </div>
+  <!-- 1-32 savol namunasi -->
+  <div class="q-card">
+    <div class="q-num">15-savol / 43</div>
+    <div class="q-badges"><span class="qbdg qb-text">Yozma</span></div>
+    <div class="q-text">Natriy xloridning suvdagi eritmasida qaysi ionlar mavjud?</div>
+    <div class="opts">
+      <div class="opt sel" onclick="selOpt(this)"><div class="opt-l">A</div><div class="opt-tx">Na⁺ va Cl⁻</div></div>
+      <div class="opt" onclick="selOpt(this)"><div class="opt-l">B</div><div class="opt-tx">Na va Cl</div></div>
+      <div class="opt" onclick="selOpt(this)"><div class="opt-l">C</div><div class="opt-tx">NaCl molekulalari</div></div>
+      <div class="opt" onclick="selOpt(this)"><div class="opt-l">D</div><div class="opt-tx">Na⁺ va OH⁻</div></div>
+    </div>
+  </div>
+  <!-- 41-savol AI -->
+  <div class="ai-sec">
+    <div class="ai-title">🤖 41-savol — AI tekshiruv</div>
+    <div class="ai-desc">Quyidagi reaksiyalarni to'ldiring. Javobingizni qog'ozga yozib, rasmga olib yuboring.<br><br>
+      <span style="font-family:'JetBrains Mono';color:#c084fc">a) Na + O₂ → ?<br>b) Fe + HCl → ?<br>c) CaCO₃ →<sup>t</sup> ?</span>
+    </div>
+    <div class="upload-zone">
+      <div class="uz-ic">📷</div>
+      <div class="uz-tx">Rasm yuklash</div>
+      <div class="uz-sub">Telefon kamerasi yoki galereyadan</div>
+    </div>
+    <!-- Tekshirilmoqda holati -->
+    <div class="ai-checking">
+      <div class="ai-spinner"></div>
+      <div>
+        <div class="ai-checking-txt">Gemini AI tekshirmoqda...</div>
+        <div class="ai-checking-sub">Odatda 10–30 soniya davom etadi</div>
+      </div>
+    </div>
+  </div>
+  <!-- 42-savol -->
+  <div class="ai-sec" style="border-color:rgba(74,144,217,.25)">
+    <div class="ai-title" style="color:#93c5fd">🔬 42-savol — Reaksiyalar (AI)</div>
+    <div class="ai-desc" style="color:#5a7ea0">Quyidagi barcha reaksiyalarni <strong style="color:#93c5fd">bitta qog'ozga</strong> chiroyli qilib yozing (har bir reaksiyani raqamlab), keyin <strong style="color:#93c5fd">bitta rasm</strong> olib yuboring.</div>
+    <!-- Reaksiyalar ro'yxati — bitta blokda -->
+    <div style="background:rgba(0,0,0,.25);border:1px solid rgba(74,144,217,.2);border-radius:var(--rs);padding:14px;margin-bottom:14px">
+      <div style="font-size:11px;color:var(--mt);margin-bottom:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Barcha reaksiyalar:</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="width:22px;height:22px;border-radius:50%;background:rgba(74,144,217,.2);color:#93c5fd;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#67e8f9">NaOH + HCl → ?</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="width:22px;height:22px;border-radius:50%;background:rgba(74,144,217,.2);color:#93c5fd;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#67e8f9">Cu + O₂ → ?</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="width:22px;height:22px;border-radius:50%;background:rgba(74,144,217,.2);color:#93c5fd;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#67e8f9">Al + H₂SO₄ → ?</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="width:22px;height:22px;border-radius:50%;background:rgba(74,144,217,.2);color:#93c5fd;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">4</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#67e8f9">Ca(OH)₂ + CO₂ → ?</span>
+        </div>
+      </div>
+    </div>
+    <!-- Bitta rasm yuklash -->
+    <div style="background:rgba(0,0,0,.2);border:2px dashed rgba(74,144,217,.35);border-radius:var(--rs);padding:18px;text-align:center;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='rgba(74,144,217,.7)'" onmouseout="this.style.borderColor='rgba(74,144,217,.35)'">
+      <div style="font-size:28px;margin-bottom:7px">📷</div>
+      <div style="font-size:13px;color:#93c5fd;font-weight:700;margin-bottom:3px">Bitta rasm yuklash</div>
+      <div style="font-size:11px;color:var(--mt)">4 ta reaksiyani bir qog'ozga yozing → rasmga oling → yuboring</div>
+    </div>
+    <!-- Yuklangandan keyin: tekshirilmoqda holati -->
+    <div class="ai-checking" style="margin-top:10px">
+      <div class="ai-spinner"></div>
+      <div>
+        <div class="ai-checking-txt">Gemini AI tekshirmoqda...</div>
+        <div class="ai-checking-sub">Har bir reaksiya alohida baholanadi</div>
+      </div>
+    </div>
+  </div>
+  <div class="q-actions">
+    <button class="qa-prev">← Oldingi</button>
+    <button class="qa-bkm">📌</button>
+    <button class="qa-next">Keyingi →</button>
+    <button class="qa-end" onclick="go('result-sert')">Yakunlash</button>
+  </div>
+</div>
+
+<!-- ===================== NATIJA — DTM ===================== -->
+<div id="s-result-dtm" class="scr">
+  <div class="result-hero">
+    <div class="r-score">80%</div>
+    <div class="r-label">DTM 2023 — 5-variant</div>
+    <div class="r-tags">
+      <span class="tag tag-free">✓ Yakunlandi</span>
+      <span style="font-size:11px;color:var(--mt);padding:3px 10px;background:var(--s1);border-radius:12px">⏱ 48 daq</span>
+    </div>
+  </div>
+  <div class="r-grid">
+    <div class="r-item"><div class="r-val" style="color:var(--grn)">24</div><div class="r-lbl">To'g'ri</div></div>
+    <div class="r-item"><div class="r-val" style="color:var(--red)">6</div><div class="r-lbl">Noto'g'ri</div></div>
+    <div class="r-item"><div class="r-val" style="color:var(--amber)">80%</div><div class="r-lbl">Ball</div></div>
+    <div class="r-item"><div class="r-val" style="color:var(--blue)">#8</div><div class="r-lbl">Reyting</div></div>
+  </div>
+  <div class="sec-title">Savollar — bosib video ko'ring</div>
+  <div class="q-grid-legend">
+    <span class="qgl" style="background:rgba(39,174,96,.12);color:#4ade80">✓ To'g'ri</span>
+    <span class="qgl" style="background:rgba(231,76,60,.12);color:#f87171">✗ Noto'g'ri</span>
+    <span class="qgl" style="background:rgba(74,144,217,.1);color:var(--blue)">▶ Video bor</span>
+  </div>
+  <div class="q-grid-wrap" id="result-dtm-qgrid"></div>
+  <div class="video-panel" id="vp-dtm">
+    <div class="vp-head">
+      <div class="vp-title" id="vp-dtm-title">▶ Savol yechimi</div>
+      <button class="vp-close" onclick="closeVP('vp-dtm')">✕ Yopish</button>
+    </div>
+    <div id="vp-dtm-player" class="vp-player">
+      <div class="vp-play-btn">▶</div>
+    </div>
+    <div id="vp-dtm-noVideo" class="vp-no-video" style="display:none">
+      <div class="nv-ic">📭</div>
+      <div class="nv-tx">Video yechim hali yuklanmagan</div>
+      <div class="nv-sub">Admin tez orada qo'shadi</div>
+    </div>
+    <div class="tg-info" id="vp-dtm-tginfo">
+      <div class="tg-dot"></div> Telegram CDN • <span id="vp-dtm-dur">—</span>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px">
+    <button class="btn btn-outline">📄 PDF yuklab olish</button>
+    <button class="btn btn-primary" onclick="go('rating')">🏆 Reytingni ko'rish</button>
+  </div>
+</div>
+
+<!-- ===================== NATIJA — ATESTATSIYA ===================== -->
+<div id="s-result-atest" class="scr">
+  <div class="result-hero">
+    <div class="r-score" style="background:linear-gradient(135deg,var(--amber),var(--ac));-webkit-background-clip:text">74%</div>
+    <div class="r-label">Atestatsiya — 3-variant</div>
+    <div class="r-tags">
+      <span class="tag tag-free">✓ Yakunlandi</span>
+      <span style="font-size:11px;color:var(--mt);padding:3px 10px;background:var(--s1);border-radius:12px">⏱ 98 daq</span>
+    </div>
+  </div>
+  <div class="r-grid">
+    <div class="r-item"><div class="r-val" style="color:var(--grn)">26</div><div class="r-lbl">To'g'ri</div></div>
+    <div class="r-item"><div class="r-val" style="color:var(--red)">9</div><div class="r-lbl">Noto'g'ri</div></div>
+    <div class="r-item"><div class="r-val" style="color:var(--amber)">74%</div><div class="r-lbl">Ball</div></div>
+    <div class="r-item"><div class="r-val" style="color:var(--blue)">#15</div><div class="r-lbl">Reyting</div></div>
+  </div>
+  <div class="sec-title">Savollar — bosib video ko'ring</div>
+  <div class="q-grid-legend">
+    <span class="qgl" style="background:rgba(39,174,96,.12);color:#4ade80">✓ To'g'ri</span>
+    <span class="qgl" style="background:rgba(231,76,60,.12);color:#f87171">✗ Noto'g'ri</span>
+    <span class="qgl" style="background:rgba(74,144,217,.1);color:var(--blue)">▶ Video bor</span>
+  </div>
+  <div class="q-grid-wrap" id="result-atest-qgrid"></div>
+  <div class="video-panel" id="vp-atest">
+    <div class="vp-head">
+      <div class="vp-title" id="vp-atest-title">▶ Savol yechimi</div>
+      <button class="vp-close" onclick="closeVP('vp-atest')">✕ Yopish</button>
+    </div>
+    <div id="vp-atest-player" class="vp-player">
+      <div class="vp-play-btn">▶</div>
+    </div>
+    <div id="vp-atest-noVideo" class="vp-no-video" style="display:none">
+      <div class="nv-ic">📭</div>
+      <div class="nv-tx">Video yechim hali yuklanmagan</div>
+      <div class="nv-sub">Admin tez orada qo'shadi</div>
+    </div>
+    <div class="tg-info" id="vp-atest-tginfo">
+      <div class="tg-dot"></div> Telegram CDN • <span id="vp-atest-dur">—</span>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px">
+    <button class="btn btn-outline">📄 PDF yuklab olish</button>
+    <button class="btn btn-primary" onclick="go('rating')">🏆 Reytingni ko'rish</button>
+  </div>
+</div>
+
+<!-- ===================== NATIJA — SERTIFIKAT (43 savol + AI) ===================== -->
+<div id="s-result-sert" class="scr">
+  <div class="result-hero" style="background:linear-gradient(135deg,#0f2338,#1a1a2e)">
+    <div class="r-score" style="background:linear-gradient(135deg,#27ae60,#1e8449);-webkit-background-clip:text">86%</div>
+    <div class="r-label">Sohibjon Boboyev — 1-variant</div>
+    <div class="r-tags">
+      <span class="tag tag-free">✓ Yakunlandi</span>
+      <span style="font-size:11px;color:var(--mt);padding:3px 10px;background:var(--s1);border-radius:12px">⏱ 3 soat 12 daq</span>
+    </div>
+  </div>
+  <div class="r-grid">
+    <div class="r-item"><div class="r-val" style="color:var(--grn)">37</div><div class="r-lbl">To'g'ri</div></div>
+    <div class="r-item"><div class="r-val" style="color:var(--red)">3</div><div class="r-lbl">Noto'g'ri</div></div>
+    <div class="r-item"><div class="r-val" style="color:#c084fc">Tekshir...</div><div class="r-lbl">41–43</div></div>
+    <div class="r-item"><div class="r-val" style="color:var(--blue)">#5</div><div class="r-lbl">Reyting</div></div>
+  </div>
+  <!-- AI tekshiruv holati -->
+  <div style="background:rgba(168,85,247,.07);border:1px solid rgba(168,85,247,.25);border-radius:var(--rs);padding:14px;margin-bottom:14px">
+    <div style="font-size:13px;font-weight:700;color:#c084fc;margin-bottom:10px">🤖 AI tekshiruv natijalari (40–43-savollar)</div>
+    <!-- 40-savol tekshirilmoqda -->
+    <div style="background:rgba(0,0,0,.2);border-radius:var(--rs);padding:11px;margin-bottom:7px;border:1px solid rgba(168,85,247,.2)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
+        <span style="font-size:12px;font-weight:600">40-savol</span>
+        <div class="ai-checking" style="padding:5px 10px;border-radius:7px;gap:7px">
+          <div class="ai-spinner" style="width:14px;height:14px"></div>
+          <span style="font-size:11px;color:#c084fc">Tekshirilmoqda...</span>
+        </div>
+      </div>
+    </div>
+    <!-- 41-savol natija -->
+    <div style="background:rgba(0,0,0,.2);border-radius:var(--rs);padding:11px;margin-bottom:7px;border:1px solid rgba(168,85,247,.2)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
+        <span style="font-size:12px;font-weight:600">41-savol</span>
+        <span style="font-size:11px;background:rgba(243,156,18,.12);color:var(--amber);padding:3px 9px;border-radius:7px;font-weight:700">⚠️ 6/9 ball</span>
+      </div>
+      <div class="sub-grid">
+        <div class="sub-r"><span class="sl">a) Na + O₂</span><span class="sv" style="color:var(--grn)">✅ 3/3</span></div>
+        <div class="sub-r"><span class="sl">b) Fe + HCl</span><span class="sv" style="color:var(--amber)">⚠️ 2/3</span></div>
+        <div class="sub-r"><span class="sl">c) CaCO₃</span><span class="sv" style="color:var(--red)">❌ 1/3</span></div>
+      </div>
+    </div>
+    <!-- 42-savol tekshirilmoqda -->
+    <div style="background:rgba(0,0,0,.2);border-radius:var(--rs);padding:11px;margin-bottom:7px;border:1px solid rgba(168,85,247,.2)">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:12px;font-weight:600">42-savol (3 reaksiya)</span>
+        <div class="ai-checking" style="padding:5px 10px;border-radius:7px;gap:7px">
+          <div class="ai-spinner" style="width:14px;height:14px"></div>
+          <span style="font-size:11px;color:#c084fc">Tekshirilmoqda...</span>
+        </div>
+      </div>
+    </div>
+    <!-- 43-savol natija -->
+    <div style="background:rgba(0,0,0,.2);border-radius:var(--rs);padding:11px;border:1px solid rgba(168,85,247,.2)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:12px;font-weight:600">43-savol</span>
+        <span style="font-size:11px;background:rgba(39,174,96,.12);color:#4ade80;padding:3px 9px;border-radius:7px;font-weight:700">✅ 9/9 ball</span>
+      </div>
+      <div style="font-size:11px;color:var(--mt)">Barcha sub-javoblar to'g'ri</div>
+    </div>
+  </div>
+  <div class="sec-title">43 ta savol — bosib video ko'ring</div>
+  <div class="q-grid-legend">
+    <span class="qgl" style="background:rgba(39,174,96,.12);color:#4ade80">✓ To'g'ri</span>
+    <span class="qgl" style="background:rgba(231,76,60,.12);color:#f87171">✗ Noto'g'ri</span>
+    <span class="qgl" style="background:rgba(168,85,247,.12);color:#c084fc">🤖 AI tekshiryapti</span>
+    <span class="qgl" style="background:rgba(74,144,217,.1);color:var(--blue)">▶ Video bor</span>
+  </div>
+  <div class="q-grid-wrap" id="result-sert-qgrid"></div>
+  <div class="video-panel" id="vp-sert">
+    <div class="vp-head">
+      <div class="vp-title" id="vp-sert-title">▶ Savol yechimi</div>
+      <button class="vp-close" onclick="closeVP('vp-sert')">✕ Yopish</button>
+    </div>
+    <div id="vp-sert-player" class="vp-player">
+      <div class="vp-play-btn">▶</div>
+    </div>
+    <div id="vp-sert-noVideo" class="vp-no-video" style="display:none">
+      <div class="nv-ic">📭</div>
+      <div class="nv-tx">Video yechim hali yuklanmagan</div>
+      <div class="nv-sub">Admin tez orada qo'shadi</div>
+    </div>
+    <div class="tg-info" id="vp-sert-tginfo">
+      <div class="tg-dot"></div> Telegram CDN • <span id="vp-sert-dur">—</span>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px">
+    <button class="btn btn-outline">📄 PDF yuklab olish</button>
+    <button class="btn btn-primary" onclick="go('rating')">🏆 Reytingni ko'rish</button>
+  </div>
+</div>
+
+<!-- ===================== REYTING ===================== -->
+<div id="s-rating" class="scr">
+  <div class="sec-title">🏆 Reyting</div>
+  <div class="rank-filters">
+    <button class="rf on" onclick="setRF(this)">Umumiy</button>
+    <button class="rf" onclick="setRF(this)">Guruh</button>
+    <button class="rf" onclick="setRF(this)">Kunlik</button>
+  </div>
+  <div class="my-rank"><div class="mr-pos">#12</div><div class="mr-sub">148 foydalanuvchi ichida</div></div>
+  <div class="rank-row"><div class="rk-pos" style="color:#fbbf24">🥇</div><div class="rk-av" style="background:linear-gradient(135deg,#d97706,#fbbf24)">A</div><div class="rk-name"><span>Alisher Qodirov</span><small>87 test</small></div><div class="rk-ball">94.2%</div></div>
+  <div class="rank-row"><div class="rk-pos" style="color:#94a3b8">🥈</div><div class="rk-av" style="background:linear-gradient(135deg,#0891b2,#06b6d4)">Z</div><div class="rk-name"><span>Zulfiya Hasanova</span><small>72 test</small></div><div class="rk-ball">91.8%</div></div>
+  <div class="rank-row"><div class="rk-pos" style="color:#c2855a">🥉</div><div class="rk-av" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">M</div><div class="rk-name"><span>Murod T.</span><small>65 test</small></div><div class="rk-ball">89.5%</div></div>
+  <div style="text-align:center;padding:8px;color:var(--mt);font-size:13px">· · ·</div>
+  <div class="rank-row me"><div class="rk-pos" style="color:var(--blue)">#12</div><div class="rk-av" style="background:linear-gradient(135deg,var(--blue),var(--ac))">S</div><div class="rk-name"><span style="color:var(--blue)">Sobirbek T. (Siz)</span><small>47 test</small></div><div class="rk-ball" style="color:var(--blue)">78.5%</div></div>
+</div>
+
+<!-- ===================== STATISTIKA ===================== -->
+<div id="s-stats" class="scr">
+  <div class="weekly">
+    <h4>📊 Haftalik faollik</h4>
+    <div class="chart-bars">
+      <div class="bar-w"><div class="bar" style="height:38px;background:linear-gradient(180deg,var(--blue),#1d4ed8)"></div><div class="bd">Du</div></div>
+      <div class="bar-w"><div class="bar" style="height:58px;background:linear-gradient(180deg,var(--grn),#166534)"></div><div class="bd">Se</div></div>
+      <div class="bar-w"><div class="bar" style="height:22px;background:linear-gradient(180deg,var(--blue),#1d4ed8)"></div><div class="bd">Ch</div></div>
+      <div class="bar-w"><div class="bar" style="height:68px;background:linear-gradient(180deg,var(--grn),#166534)"></div><div class="bd">Pa</div></div>
+      <div class="bar-w"><div class="bar" style="height:48px;background:linear-gradient(180deg,var(--blue),#1d4ed8)"></div><div class="bd">Ju</div></div>
+      <div class="bar-w"><div class="bar" style="height:62px;background:linear-gradient(180deg,var(--amber),#b45309)"></div><div class="bd">Sh</div></div>
+      <div class="bar-w"><div class="bar" style="height:18px;opacity:.3;background:var(--bd)"></div><div class="bd">Ya</div></div>
+    </div>
+  </div>
+  <div class="prog-list">
+    <h4>Test turlari bo'yicha</h4>
+    <div class="pr"><div class="pr-head"><span>🔴 DTM</span><small>82%</small></div><div class="pr-bar"><div class="pr-fill" style="width:82%;background:linear-gradient(90deg,var(--ac),#b91c1c)"></div></div></div>
+    <div class="pr"><div class="pr-head"><span>📗 Milliy Sertifikat</span><small>86%</small></div><div class="pr-bar"><div class="pr-fill" style="width:86%;background:linear-gradient(90deg,var(--grn),#166534)"></div></div></div>
+    <div class="pr"><div class="pr-head"><span>🎓 Atestatsiya</span><small>74%</small></div><div class="pr-bar"><div class="pr-fill" style="width:74%;background:linear-gradient(90deg,var(--amber),#b45309)"></div></div></div>
+    <div class="pr"><div class="pr-head"><span>📌 Mavzular</span><small>70%</small></div><div class="pr-bar"><div class="pr-fill" style="width:70%;background:linear-gradient(90deg,var(--blue),#1d4ed8)"></div></div></div>
+  </div>
+</div>
+
+<script>
+// ── TEMA ──
+const THEMES = ['','light','teal','teal-light'];
+function setTheme(idx) {
+  document.body.className = THEMES[idx] || '';
+  document.querySelectorAll('.th-btn').forEach((b,i)=>b.classList.toggle('act',i===idx));
+  localStorage.setItem('th',idx);
+}
+(function(){
+  const saved = parseInt(localStorage.getItem('th')||'0');
+  setTheme(saved);
+})();
+
+const NAV_IDS = ['auth','home','tests','test-dtm','test-atest','test-sert','result-dtm','result-atest','result-sert','rating','stats'];
+function go(id) {
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('on'));
+  const el = document.getElementById('s-'+id);
+  if(el) el.classList.add('on');
+  const idx = NAV_IDS.indexOf(id);
+  const btns = document.querySelectorAll('.nav button');
+  if(idx>=0 && btns[idx]) btns[idx].classList.add('on');
+  window.scrollTo(0,0);
+}
+
+// ── TAYMERLAR ──
+const TIMER_CONFIGS = {
+  'dtm':   { secs:60*60,   el:'timer-dtm',   bar:'tbar-dtm' },
+  'atest': { secs:120*60,  el:'timer-atest',  bar:'tbar-atest' },
+  'sert':  { secs:240*60,  el:'timer-sert',   bar:'tbar-sert' }
+};
+const timerState = {};
+function fmt(s) {
+  const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), sc=s%60;
+  if(h>0) return h+':'+(m<10?'0':'')+m+':'+(sc<10?'0':'')+sc;
+  return (m<10?'0':'')+m+':'+(sc<10?'0':'')+sc;
+}
+function startTimer(key) {
+  if(timerState[key]) return;
+  const cfg = TIMER_CONFIGS[key];
+  timerState[key] = { rem:cfg.secs, total:cfg.secs };
+  const tick = () => {
+    const st=timerState[key]; if(!st||st.rem<=0) return;
+    st.rem--;
+    const el=document.getElementById(cfg.el), bar=document.getElementById(cfg.bar);
+    if(el){ el.textContent=fmt(st.rem); if(st.rem<300)el.style.color='var(--red)'; else if(st.rem<600)el.style.color='var(--amber)'; }
+    if(bar){ bar.style.width=(st.rem/st.total*100)+'%'; if(st.rem<300)bar.style.background='var(--red)'; else if(st.rem<600)bar.style.background='var(--amber)'; }
+    setTimeout(tick,1000);
+  };
+  setTimeout(tick,1000);
+}
+function startTest(type, num) {
+  if(type==='dtm'||type==='dtm-sinov') {
+    document.getElementById('dtm-test-name').textContent = type==='dtm-sinov'?'Random sinov testi':'DTM — '+num+'-variant';
+    startTimer('dtm'); go('test-dtm');
+  } else if(type==='atest') { startTimer('atest'); go('test-atest'); }
+  else if(type==='sert') { startTimer('sert'); go('test-sert'); }
+}
+
+// ── DTM variantlar ──
+function renderDTM(yr) {
+  const c=document.getElementById('dtm-var-list'); if(!c)return;
+  c.innerHTML='';
+  for(let i=1;i<=30;i++){
+    const d=document.createElement('div'); d.className='var-row';
+    const g=i%5===0;
+    d.innerHTML=`<div><div class="var-name">${yr} — ${i}-variant</div><div class="var-meta">30 savol • 60 daq${g?' • Guruhda ✓':''}</div></div><div style="display:flex;align-items:center;gap:9px"><span class="price-badge">5 000 so'm</span><button class="go-btn" onclick="startTest('dtm',${i})">Boshlash</button></div>`;
+    c.appendChild(d);
+  }
+}
+function setYear(el,yr){ document.querySelectorAll('.ytab').forEach(t=>t.classList.remove('on')); el.classList.add('on'); renderDTM(yr); }
+renderDTM('2020');
+
+// ── Atestatsiya variantlar ──
+(function(){
+  const c=document.getElementById('atest-var-list'); if(!c)return;
+  for(let i=1;i<=35;i++){
+    const d=document.createElement('div'); d.className='var-row';
+    d.innerHTML=`<div><div class="var-name">${i}-variant</div><div class="var-meta">35 savol • 120 daq • Guruhda ✓</div></div><div style="display:flex;align-items:center;gap:9px"><span class="price-badge">5 000 so'm</span><button class="go-btn" onclick="startTest('atest',${i})">Boshlash</button></div>`;
+    c.appendChild(d);
+  }
+})();
+
+// ── Savol nav tugmalari ──
+function buildNav(cid, count, aiFrom) {
+  const c=document.getElementById(cid); if(!c)return;
+  for(let i=1;i<=count;i++){
+    const btn=document.createElement('button');
+    btn.className='qn'+(i===1?' cur':i<=3?' ans':'')+(aiFrom&&i>=aiFrom?' ai':'');
+    btn.textContent=i;
+    btn.onclick=()=>{ document.querySelectorAll('#'+cid+' .qn').forEach(b=>b.classList.remove('cur')); btn.classList.add('cur'); };
+    c.appendChild(btn);
+  }
+}
+buildNav('qnav-dtm',30,null);
+buildNav('qnav-atest',35,null);
+buildNav('qnav-sert',43,41);
+
+// ── Natija tugmalari + video ──
+function buildResultGrid(cid, count, wrongArr, videoMap, aiFrom, vpId) {
+  const c=document.getElementById(cid); if(!c)return;
+  for(let i=1;i<=count;i++){
+    const btn=document.createElement('button');
+    const isAI = aiFrom && i>=aiFrom;
+    const isWrong = wrongArr.includes(i);
+    const hasVid = videoMap[i];
+    let cls='rq-btn ';
+    if(isAI) cls+='ai-check'; else if(isWrong) cls+='ng'; else cls+='ok';
+    if(hasVid) cls+=' has-video';
+    btn.className=cls;
+    btn.innerHTML=String(i)+(hasVid?'<span style="font-size:8px;opacity:.75">▶</span>':'');
+    btn.title=hasVid?`${i}-savol — Video mavjud ▶`:`${i}-savol`;
+    btn.onclick=()=>{
+      const vp=document.getElementById(vpId);
+      const titleEl=document.getElementById(vpId.replace('vp-','vp-')+'itle'), // dynamic id
+            titId=vpId+'-title', durId=vpId+'-dur',
+            playerId=vpId+'-player', noVidId=vpId+'-noVideo', tgId=vpId+'-tginfo';
+      document.getElementById(titId).textContent=(hasVid?'▶ ':'')+i+'-savol yechimi';
+      if(hasVid){
+        document.getElementById(noVidId).style.display='none';
+        document.getElementById(playerId).style.display='flex';
+        document.getElementById(tgId).style.display='flex';
+        document.getElementById(durId).textContent=hasVid+' daqiqa';
+      } else {
+        document.getElementById(playerId).style.display='none';
+        document.getElementById(tgId).style.display='none';
+        document.getElementById(noVidId).style.display='block';
+      }
+      vp.classList.add('show');
+      vp.scrollIntoView({behavior:'smooth',block:'nearest'});
+    };
+    c.appendChild(btn);
+  }
+}
+
+buildResultGrid('result-dtm-qgrid',  30, [5,9,15,20,23,26],         {3:'3:24',7:'2:45',12:'5:10',18:'4:30',24:'6:00',27:'3:55'}, null, 'vp-dtm');
+buildResultGrid('result-atest-qgrid',35, [4,8,14,21,25,29,32,34,35], {2:'4:12',5:'3:30',11:'6:15',19:'5:00',28:'4:45',33:'7:20'}, null, 'vp-atest');
+buildResultGrid('result-sert-qgrid', 43, [6,11,18],                   {3:'3:24',8:'4:10',15:'5:30',22:'2:55',30:'6:20',35:'3:45'}, 40, 'vp-sert');
+
+function closeVP(id){ document.getElementById(id).classList.remove('show'); }
+
+// ── Boshqalar ──
+function selAuth(el){ document.querySelectorAll('.auth-card').forEach(a=>a.classList.remove('sel')); el.classList.add('sel'); }
+function selOpt(el){ el.closest('.opts').querySelectorAll('.opt').forEach(o=>o.classList.remove('sel')); el.classList.add('sel'); }
+function setRF(el){ document.querySelectorAll('.rf').forEach(b=>b.classList.remove('on')); el.classList.add('on'); }
+</script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+# Maxfiy fayllar — HECH QACHON git'ga ketmasin
+.env
+.env.local
+.env.production
+**/.env
+**/.env.local
+**/.env.production
+
+# Bog'liqliklar va build
+node_modules/
+dist/
+.next/
+*.tsbuildinfo
+
+# Yuklangan fayllar (R2'ga ketadi)
+uploads/
+
+# Tizim
+.DS_Store
+*.log
