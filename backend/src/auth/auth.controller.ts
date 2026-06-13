@@ -20,6 +20,12 @@ export class AuthController {
     return this.authService.verifyOtp(dto);
   }
 
+  // POST /auth/telegram — Mini App login (initData tasdiqlanadi)
+  @Post('telegram')
+  telegramAuth(@Body() body: { initData: string }) {
+    return this.authService.telegramAuth(body.initData || '');
+  }
+
   // GET /auth/me
   @Get('me')
   @UseGuards(JwtAuthGuard)

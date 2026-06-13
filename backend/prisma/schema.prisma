@@ -10,13 +10,15 @@ datasource db {
 // ─── FOYDALANUVCHI ───────────────────────────────────────────────────────────
 
 model User {
-  id          Int      @id @default(autoincrement())
-  phone       String   @unique
-  name        String?
-  role        Role     @default(STUDENT)
-  groupId     Int?
-  group       Group?   @relation(fields: [groupId], references: [id])
-  createdAt   DateTime @default(now())
+  id               Int      @id @default(autoincrement())
+  phone            String   @unique
+  name             String?
+  role             Role     @default(STUDENT)
+  groupId          Int?
+  group            Group?   @relation(fields: [groupId], references: [id])
+  telegramId       BigInt?  @unique
+  telegramUsername String?
+  createdAt        DateTime @default(now())
 
   attempts    Attempt[]
   payments    Payment[]

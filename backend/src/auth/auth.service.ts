@@ -4,6 +4,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import * as crypto from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { EskizService } from './eskiz.service';
 import { SendOtpDto, VerifyOtpDto } from './dto/auth.dto';
@@ -15,6 +16,89 @@ export class AuthService {
     private jwt: JwtService,
     private eskiz: EskizService,
   ) {}
+
+  // JWT token + user obyektini bitta joydan qaytaramiz
+  private buildAuthResponse(user: {
+    id: number;
+    phone: string;
+    name: string | null;
+    role: string;
+  }) {
+    const token = this.jwt.sign({
+      sub: user.id,
+      phone: user.phone,
+      role: user.role,
+    });
+    return {
+      access_token: token,
+      user: { id: user.id, phone: user.phone, name: user.name, role: user.role },
+    };
+  }
+
+  // ─── Telegram Mini App ─────────────────────────────────────────────────────
+  // initData ni bot token bilan tasdiqlash (Telegram WebApp algoritmi)
+  private verifyTelegramInitData(initData: string): {
+    id: number;
+    username?: string;
+    first_name?: string;
+  } {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    if (!token) throw new BadRequestException('Telegram bot sozlanmagan');
+
+    const params = new URLSearchParams(initData);
+    const hash = params.get('hash');
+    if (!hash) throw new UnauthorizedException("Telegram ma'lumoti noto'g'ri");
+
+    params.delete('hash');
+    const dataCheckString = [...params.entries()]
+      .map(([k, v]) => `${k}=${v}`)
+      .sort()
+      .join('\n');
+
+    const secretKey = crypto
+      .createHmac('sha256', 'WebAppData')
+      .update(token)
+      .digest();
+    const computed = crypto
+      .createHmac('sha256', secretKey)
+      .update(dataCheckString)
+      .digest('hex');
+
+    if (computed !== hash) {
+      throw new UnauthorizedException('Telegram imzosi tasdiqlanmadi');
+    }
+
+    // auth_date eskirgan bo'lsa rad etamiz (24 soat)
+    const authDate = parseInt(params.get('auth_date') || '0', 10);
+    if (authDate && Date.now() / 1000 - authDate > 86400) {
+      throw new UnauthorizedException('Telegram sessiyasi eskirgan');
+    }
+
+    const userRaw = params.get('user');
+    if (!userRaw) throw new UnauthorizedException('Telegram foydalanuvchisi yo\'q');
+    const tgUser = JSON.parse(userRaw);
+    return {
+      id: tgUser.id,
+      username: tgUser.username,
+      first_name: tgUser.first_name,
+    };
+  }
+
+  // Mini App login: initData tasdiqlanadi, telegramId bo'yicha user topiladi
+  async telegramAuth(initData: string) {
+    const tg = this.verifyTelegramInitData(initData);
+    const user = await this.prisma.user.findUnique({
+      where: { telegramId: BigInt(tg.id) },
+    });
+    if (user) {
+      return this.buildAuthResponse(user);
+    }
+    // Hali bog'lanmagan — botda telefon ulashish kerak
+    return {
+      needsPhone: true,
+      telegram: { id: tg.id, name: tg.first_name || tg.username || '' },
+    };
+  }
 
   // 1. SMS kod yuborish
   async sendOtp(dto: SendOtpDto) {
@@ -81,22 +165,55 @@ export class AuthService {
       });
     }
 
-    // JWT token yaratamiz
-    const token = this.jwt.sign({
-      sub: user.id,
-      phone: user.phone,
-      role: user.role,
+    return this.buildAuthResponse(user);
+  }
+
+  // Bot orqali telefon ulashilganda: telegramId ni telefon akkountiga bog'laymiz
+  // (mavjud bo'lsa yangilaymiz, bo'lmasa yaratamiz)
+  async linkTelegramByPhone(
+    telegramId: number,
+    phone: string,
+    name?: string,
+    username?: string,
+  ) {
+    // Telefon raqamni normallashtiramiz (+ bilan)
+    const normalized = phone.startsWith('+') ? phone : `+${phone}`;
+    const tgId = BigInt(telegramId);
+
+    // Bu telegramId allaqachon boshqa akkountga bog'langan bo'lsa — uni uzamiz
+    const existingByTg = await this.prisma.user.findUnique({
+      where: { telegramId: tgId },
+    });
+    if (existingByTg && existingByTg.phone !== normalized) {
+      await this.prisma.user.update({
+        where: { id: existingByTg.id },
+        data: { telegramId: null },
+      });
+    }
+
+    const byPhone = await this.prisma.user.findUnique({
+      where: { phone: normalized },
     });
 
-    return {
-      access_token: token,
-      user: {
-        id: user.id,
-        phone: user.phone,
-        name: user.name,
-        role: user.role,
+    if (byPhone) {
+      return this.prisma.user.update({
+        where: { id: byPhone.id },
+        data: {
+          telegramId: tgId,
+          telegramUsername: username || byPhone.telegramUsername,
+          name: byPhone.name || name || null,
+        },
+      });
+    }
+
+    return this.prisma.user.create({
+      data: {
+        phone: normalized,
+        name: name || null,
+        telegramId: tgId,
+        telegramUsername: username || null,
       },
-    };
+    });
   }
 
   // 3. JWTdan foydalanuvchini olish
