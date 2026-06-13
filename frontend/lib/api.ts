@@ -15,9 +15,18 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401 && typeof window !== 'undefined') {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+    const status = err.response?.status;
+    if (typeof window !== 'undefined') {
+      // 401 — token yaroqsiz/muddati tugagan
+      // 403 — token eski rol bilan berilgan (masalan STUDENT) ammo hozir rol o'zgargan.
+      //       Admin endpointlari 403 qaytaradi → tokenni yangilash uchun qayta login kerak.
+      if (status === 401) {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      } else if (status === 403 && window.location.pathname.startsWith('/admin')) {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(err);
   }

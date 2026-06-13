@@ -88,7 +88,9 @@ export default function MilliyPage() {
       const vMap: Record<number, string> = {};
       vRes.data.forEach((v: any) => { vMap[v.questionNo] = v.fileId; });
       setVideos(vMap);
-    } catch { toast.error('Yuklashda xatolik'); }
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || 'Yuklashda xatolik');
+    }
     setLoading(false);
   };
 
@@ -172,7 +174,9 @@ export default function MilliyPage() {
       setSelectedTest(p => p ? { ...p, pdfUrl: r.data.url } : p);
       setTests(p => p.map(t => t.id === selectedTest.id ? { ...t, pdfUrl: r.data.url } : t));
       toast.success('PDF yuklandi!');
-    } catch { toast.error('PDF yuklanmadi'); }
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || 'PDF yuklanmadi');
+    }
     setUploadingPdf(false);
   };
 
