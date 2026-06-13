@@ -193,6 +193,31 @@ export default function MilliyPage() {
     setUploading(null);
   };
 
+  const deletePdf = async () => {
+    if (!selectedTest?.pdfUrl) return;
+    if (!confirm("PDF o'chirilsinmi?")) return;
+    setUploadingPdf(true);
+    try {
+      await api.patch(`/tests/${selectedTest.id}`, { pdfUrl: null });
+      setSelectedTest(p => p ? { ...p, pdfUrl: undefined } : p);
+      setTests(p => p.map(t => t.id === selectedTest.id ? { ...t, pdfUrl: undefined } : t));
+      toast.success("PDF o'chirildi");
+    } catch (e: any) { toast.error(e.response?.data?.message || "O'chirilmadi"); }
+    setUploadingPdf(false);
+  };
+
+  const deleteImage = async (orderNo: number) => {
+    if (!selectedTest) return;
+    if (!confirm(`${orderNo}-savol rasmi o'chirilsinmi?`)) return;
+    setUploading(orderNo);
+    try {
+      await api.post(`/tests/${selectedTest.id}/tq`, { orderNo, imageUrl: null });
+      setQuestions(p => p.map(q => q.orderNo === orderNo ? { ...q, imageUrl: undefined } : q));
+      toast.success(`${orderNo}-savol rasmi o'chirildi`);
+    } catch (e: any) { toast.error(e.response?.data?.message || "O'chirilmadi"); }
+    setUploading(null);
+  };
+
   const pasteImage = async (orderNo: number, e: React.ClipboardEvent) => {
     if (!selectedTest) return;
     for (const item of Array.from(e.clipboardData?.items || [])) {
@@ -467,6 +492,12 @@ export default function MilliyPage() {
                   {uploadingPdf ? '⏳...' : selectedTest.pdfUrl ? '🔄 Almashtirish' : '📎 PDF Yuklash'}
                 </span>
               </label>
+              {selectedTest.pdfUrl && (
+                <button onClick={deletePdf} disabled={uploadingPdf}
+                  style={{ padding: '7px 12px', backgroundColor: '#ef444420', color: '#ef4444', border: '1px solid #ef4444', borderRadius: 9, fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
+                  🗑 O'chirish
+                </button>
+              )}
             </div>
 
             {/* Telegram ID */}
@@ -571,7 +602,13 @@ export default function MilliyPage() {
                                 </label>
                                 <span style={{ color: theme.text, opacity: 0.4, fontSize: 11 }}>yoki ⌘V</span>
                               </div>
-                              {q.imageUrl && <img src={q.imageUrl} alt="" style={{ height: 52, borderRadius: 6, border: `1px solid ${theme.border}`, objectFit: 'cover' }} />}
+                              {q.imageUrl && (
+                                <div style={{ position: 'relative' }}>
+                                  <img src={q.imageUrl} alt="" style={{ height: 52, borderRadius: 6, border: `1px solid ${theme.border}`, objectFit: 'cover' }} />
+                                  <button onClick={() => deleteImage(q.orderNo)} title="Rasmni o'chirish"
+                                    style={{ position: 'absolute', top: -6, right: -6, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#ef4444', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+                                </div>
+                              )}
                               {!isOpen(q.orderNo) && !isAi(q.orderNo) && (
                                 <div style={{ display: 'flex', gap: 5 }}>
                                   {getOpts(q.orderNo).map(opt => (
