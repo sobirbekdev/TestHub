@@ -7,6 +7,7 @@ import { Question } from '@/types';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import ThemeWrapper from '@/components/layout/ThemeWrapper';
+import PdfViewer from '@/components/PdfViewer';
 
 // ─── Screenshot himoyasi ──────────────────────────────────────────────────────
 const antiScreenshotStyle: React.CSSProperties = {
@@ -369,15 +370,9 @@ export default function TestPage() {
             {/* PDF — himoyalangan ko'rinish */}
             <div style={{ flex: 1, borderRadius: 12, overflow: 'hidden', border: `1px solid ${theme.border}`, minHeight: isMobile ? 160 : undefined, display: 'flex', flexDirection: 'column', position: 'relative' }}>
               {testInfo.pdfUrl ? (
-                <>
-                  <iframe
-                    src={`${testInfo.pdfUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
-                    style={{ width: '100%', flex: 1, border: 'none', minHeight: isMobile ? 300 : undefined }}
-                    title="PDF"
-                  />
-                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10, pointerEvents: 'none' }} />
-                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 50, zIndex: 20, backgroundColor: 'transparent' }} onContextMenu={e => e.preventDefault()} />
-                </>
+                <div style={{ flex: 1, minHeight: isMobile ? 300 : undefined, position: 'relative' }}>
+                  <PdfViewer url={testInfo.pdfUrl} bg={theme.card} />
+                </div>
               ) : (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: theme.text, opacity: 0.4, flexDirection: 'column', gap: 8 }}>
                   <span style={{ fontSize: 32 }}>📄</span>
@@ -466,17 +461,9 @@ export default function TestPage() {
             {/* Chap: PDF himoyalangan */}
             <div style={{ flex: 1, borderRadius: 12, overflow: 'hidden', border: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', position: 'relative', minHeight: isMobile ? 200 : undefined, userSelect: 'none', WebkitUserSelect: 'none' } as React.CSSProperties}>
               {testInfo.pdfUrl ? (
-                <>
-                  <iframe
-                    src={`${testInfo.pdfUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
-                    style={{ width: '100%', flex: 1, border: 'none', minHeight: isMobile ? 280 : undefined }}
-                    title="PDF"
-                  />
-                  {/* Yuklab olish / right-click bloklash */}
-                  <div style={{ position: 'absolute', inset: 0, zIndex: 10, pointerEvents: 'none' }} />
-                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 44, zIndex: 20, background: 'transparent' }}
-                    onContextMenu={e => e.preventDefault()} />
-                </>
+                <div style={{ flex: 1, minHeight: isMobile ? 280 : undefined, position: 'relative' }}>
+                  <PdfViewer url={testInfo.pdfUrl} bg={theme.card} />
+                </div>
               ) : (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: theme.text, opacity: 0.4, flexDirection: 'column', gap: 8 }}>
                   <span style={{ fontSize: 32 }}>📄</span>
