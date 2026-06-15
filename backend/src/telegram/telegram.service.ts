@@ -1,10 +1,13 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import axios from 'axios';
-import { createCanvas, GlobalFonts } from '@napi-rs/canvas';
 import * as path from 'path';
 import * as fs from 'fs';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from '../auth/auth.service';
+
+// MUHIM: @napi-rs/canvas — native kutubxona. Uni faylning tepasida import qilsak
+// va Render'da yuklanmasa, BUTUN backend ishga tushmay qoladi. Shuning uchun
+// faqat reyting rasmi chizilayotganda lazy require qilamiz (xato bo'lsa ham server tirik qoladi).
 
 @Injectable()
 export class TelegramService implements OnModuleInit, OnModuleDestroy {
@@ -13,6 +16,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
   private lastUpdateId = 0;
   private pollInterval: NodeJS.Timeout | null = null;
   private fontsRegistered = false;
+  private canvasLib: any = undefined; // undefined = hali urinilmagan; null = yuklanmadi
 
   constructor(
     private prisma: PrismaService,
@@ -338,15 +342,28 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
   }
 
   // ─── Guruh reytingi (rasm) ───────────────────────────────────────────────────
+  // @napi-rs/canvas ni xavfsiz (lazy) yuklash — yuklanmasa null qaytaradi, server qulamaydi
+  private loadCanvas(): any {
+    if (this.canvasLib !== undefined) return this.canvasLib;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      this.canvasLib = require('@napi-rs/canvas');
+    } catch (e: any) {
+      this.logger.warn(`@napi-rs/canvas yuklanmadi (reyting rasmi o'chiq): ${e?.message}`);
+      this.canvasLib = null;
+    }
+    return this.canvasLib;
+  }
+
   // Shriftlarni bir marta ro'yxatdan o'tkazamiz (Render'da tizim shrifti bo'lmasligi mumkin)
-  private ensureFonts() {
-    if (this.fontsRegistered) return;
+  private ensureFonts(lib: any) {
+    if (this.fontsRegistered || !lib?.GlobalFonts) return;
     try {
       const dir = path.join(process.cwd(), 'assets', 'fonts');
       const regular = path.join(dir, 'DejaVuSans.ttf');
       const bold = path.join(dir, 'DejaVuSans-Bold.ttf');
-      if (fs.existsSync(regular)) GlobalFonts.register(fs.readFileSync(regular), 'THSans');
-      if (fs.existsSync(bold)) GlobalFonts.register(fs.readFileSync(bold), 'THSansBold');
+      if (fs.existsSync(regular)) lib.GlobalFonts.register(fs.readFileSync(regular), 'THSans');
+      if (fs.existsSync(bold)) lib.GlobalFonts.register(fs.readFileSync(bold), 'THSansBold');
     } catch (e: any) {
       this.logger.warn(`Shrift yuklanmadi: ${e?.message}`);
     }
@@ -402,13 +419,16 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     return t + '…';
   }
 
-  // Reyting jadvalini PNG ko'rinishida chizish
+  // Reyting jadvalini PNG ko'rinishida chizish (canvas yuklanmasa null qaytaradi)
   private renderRankingImage(data: {
     testTitle: string;
     groupName: string;
     rows: { name: string; score: number | null; taken: boolean }[];
-  }): Buffer {
-    this.ensureFonts();
+  }): Buffer | null {
+    const lib = this.loadCanvas();
+    if (!lib?.createCanvas) return null;
+    const createCanvas = lib.createCanvas;
+    this.ensureFonts(lib);
     const FONT = 'THSans';
     const BOLD = 'THSansBold';
     const W = 820;
@@ -532,14 +552,29 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     }
 
     const taken = ranking.rows.filter((r) => r.taken).length;
+    const chatId = Number(group.curator.telegramId);
+    const header = `🏆 ${ranking.testTitle}\n${ranking.groupName} — reyting (${taken}/${ranking.rows.length} ishladi)`;
+
     try {
       const image = this.renderRankingImage(ranking);
-      const caption = `🏆 ${ranking.testTitle}\n${ranking.groupName} — reyting (${taken}/${ranking.rows.length} ishladi)`;
-      await this.sendPhoto(Number(group.curator.telegramId), image, caption);
-      return { ok: true, count: taken };
+      if (image) {
+        await this.sendPhoto(chatId, image, header);
+        return { ok: true, count: taken, mode: 'image' };
+      }
+      // Rasm chizilmasa (canvas yo'q) — matn ko'rinishida yuboramiz
+      let rank = 0;
+      const lines = ranking.rows
+        .map((r) =>
+          r.taken
+            ? `${(rank += 1)}. ${r.name} — ${r.score}%`
+            : `–. ${r.name} — ishlamagan`,
+        )
+        .join('\n');
+      await this.sendMessage(chatId, `${header}\n\n${lines}`);
+      return { ok: true, count: taken, mode: 'text' };
     } catch (e: any) {
-      this.logger.error(`Reyting rasmi yuborilmadi: ${e?.message}`);
-      return { ok: false, message: 'Rasm yaratib bo\'lmadi' };
+      this.logger.error(`Reyting yuborilmadi: ${e?.message}`);
+      return { ok: false, message: "Reyting yuborib bo'lmadi" };
     }
   }
 
