@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useThemeStore } from '@/store/theme';
 import api from '@/lib/api';
 
@@ -10,17 +11,24 @@ const TYPE_LABELS: Record<string, string> = {
 
 export default function StatsPage() {
   const { theme } = useThemeStore();
+  const router = useRouter();
   const [stats, setStats] = useState<any>(null);
+  const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/leaderboard/my-stats').then((r) => { setStats(r.data); setLoading(false); }).catch(() => setLoading(false));
+    Promise.all([
+      api.get('/leaderboard/my-stats').then((r) => setStats(r.data)).catch(() => {}),
+      api.get('/attempts/history').then((r) => setHistory(r.data || [])).catch(() => {}),
+    ]).finally(() => setLoading(false));
   }, []);
 
   if (loading) return <div style={{ color: theme.text, opacity: 0.4, padding: 40, textAlign: 'center' }}>Yuklanmoqda...</div>;
   if (!stats) return null;
 
   const maxBar = Math.max(...(stats.weekly?.map((d: any) => d.count) || [1]), 1);
+
+  const scoreColor = (s: number) => (s >= 60 ? '#10b981' : s >= 40 ? '#f59e0b' : '#ef4444');
 
   return (
     <div className="animate-fade-in">
@@ -74,6 +82,37 @@ export default function StatsPage() {
           ))}
         </div>
       )}
+
+      {/* Natijalar — yakunlangan testlar */}
+      <div style={{ backgroundColor: theme.card, border: `1px solid ${theme.border}`, borderRadius: 18, padding: 20, marginTop: 16 }}>
+        <p style={{ color: theme.text, fontWeight: 600, marginBottom: 14 }}>📋 Natijalar</p>
+        {history.length === 0 ? (
+          <p style={{ color: theme.text, opacity: 0.4, fontSize: 13 }}>Hali yakunlangan test yo'q</p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {history.map((a) => (
+              <button key={a.id} onClick={() => router.push(`/result/${a.id}`)}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px',
+                  backgroundColor: theme.input, border: `1px solid ${theme.border}`, borderRadius: 12,
+                  cursor: 'pointer', textAlign: 'left', width: '100%' }}>
+                <div style={{ width: 44, height: 44, borderRadius: 10, flexShrink: 0,
+                  backgroundColor: `${scoreColor(a.score ?? 0)}20`, color: scoreColor(a.score ?? 0),
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13 }}>
+                  {Math.round(a.score ?? 0)}%
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ color: theme.text, fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.test?.title || 'Test'}</p>
+                  <p style={{ color: theme.text, opacity: 0.45, fontSize: 11 }}>
+                    {TYPE_LABELS[a.test?.type] || a.test?.type}
+                    {a.finishedAt ? ` · ${new Date(a.finishedAt).toLocaleDateString('uz')}` : ''}
+                  </p>
+                </div>
+                <span style={{ color: theme.accent, fontSize: 13 }}>Batafsil →</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

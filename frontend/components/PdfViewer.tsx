@@ -6,62 +6,93 @@ import { useEffect, useRef, useState } from 'react';
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
 export default function PdfViewer({ url, bg = '#111' }: { url: string; bg?: string }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
   const hostRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<'loading' | 'error' | 'done'>('loading');
 
   useEffect(() => {
     let cancelled = false;
-    const host = hostRef.current;
+    let lastWidth = 0;
+
+    const draw = async (doc: any) => {
+      const host = hostRef.current;
+      const scroll = scrollRef.current;
+      if (!host || !scroll) return;
+      const width = Math.floor(scroll.clientWidth) || 600;
+      lastWidth = width;
+      host.innerHTML = '';
+      const dpr = Math.min(window.devicePixelRatio || 1, 2); // mobil xotira uchun cheklov
+
+      for (let n = 1; n <= doc.numPages; n++) {
+        const page = await doc.getPage(n);
+        if (cancelled) return;
+        const base = page.getViewport({ scale: 1 });
+        const cssScale = width / base.width;
+        const viewport = page.getViewport({ scale: cssScale * dpr });
+
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.floor(viewport.width);
+        canvas.height = Math.floor(viewport.height);
+        canvas.style.width = '100%';
+        canvas.style.height = 'auto';
+        canvas.style.display = 'block';
+        canvas.style.marginBottom = '8px';
+        canvas.style.borderRadius = '4px';
+        const ctx = canvas.getContext('2d');
+        if (!ctx) continue;
+        host.appendChild(canvas);
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        if (cancelled) return;
+        // Birinchi sahifa chizilishi bilan "yuklanmoqda" ni olib tashlaymiz
+        if (n === 1) setStatus('done');
+      }
+    };
 
     (async () => {
       try {
         const pdfjs: any = await import('pdfjs-dist');
         pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
-
         const proxied = `${API}/upload/pdf?url=${encodeURIComponent(url)}`;
         const doc = await pdfjs.getDocument({ url: proxied }).promise;
-        if (cancelled || !host) return;
-        host.innerHTML = '';
+        if (cancelled) return;
 
-        const containerWidth = host.clientWidth || 600;
-        const dpr = Math.min(window.devicePixelRatio || 1, 2); // mobil xotira uchun cheklov
+        // Layout joylashishi uchun bir kadr kutamiz (clientWidth to'g'ri bo'lsin)
+        await new Promise((r) => requestAnimationFrame(() => r(null)));
+        if (cancelled) return;
+        await draw(doc);
 
-        for (let n = 1; n <= doc.numPages; n++) {
-          const page = await doc.getPage(n);
-          if (cancelled) return;
-          const base = page.getViewport({ scale: 1 });
-          const cssScale = containerWidth / base.width;
-          const viewport = page.getViewport({ scale: cssScale * dpr });
-
-          const canvas = document.createElement('canvas');
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-          canvas.style.width = '100%';
-          canvas.style.height = 'auto';
-          canvas.style.display = 'block';
-          canvas.style.marginBottom = '8px';
-          canvas.style.borderRadius = '4px';
-          const ctx = canvas.getContext('2d');
-          if (!ctx) continue;
-          host.appendChild(canvas);
-          await page.render({ canvasContext: ctx, viewport }).promise;
-        }
-        if (!cancelled) setStatus('done');
+        // Orientatsiya/o'lcham o'zgarsa — qayta chizamiz
+        const ro = new ResizeObserver(() => {
+          const w = Math.floor(scrollRef.current?.clientWidth || 0);
+          if (w && Math.abs(w - lastWidth) > 30) draw(doc);
+        });
+        if (scrollRef.current) ro.observe(scrollRef.current);
+        (draw as any)._ro = ro;
       } catch {
         if (!cancelled) setStatus('error');
       }
     })();
 
-    return () => { cancelled = true; if (host) host.innerHTML = ''; };
+    return () => {
+      cancelled = true;
+      const ro = (draw as any)._ro as ResizeObserver | undefined;
+      if (ro) ro.disconnect();
+      if (hostRef.current) hostRef.current.innerHTML = '';
+    };
   }, [url]);
 
   return (
     <div
+      ref={scrollRef}
       onContextMenu={(e) => e.preventDefault()}
-      style={{ width: '100%', height: '100%', overflowY: 'auto', backgroundColor: bg, padding: 8 }}
+      style={{
+        position: 'absolute', inset: 0,
+        overflowY: 'auto', WebkitOverflowScrolling: 'touch',
+        backgroundColor: bg, padding: 8,
+      } as React.CSSProperties}
     >
       {status !== 'done' && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#fff', opacity: 0.5, flexDirection: 'column', gap: 8 }}>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', opacity: 0.5, flexDirection: 'column', gap: 8, pointerEvents: 'none' }}>
           <span style={{ fontSize: 28 }}>{status === 'error' ? '⚠️' : '📄'}</span>
           <span style={{ fontSize: 13 }}>{status === 'error' ? 'PDF yuklanmadi' : 'PDF yuklanmoqda...'}</span>
         </div>

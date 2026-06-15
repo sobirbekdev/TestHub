@@ -47,6 +47,11 @@ export default function TestsPage() {
     }
     try {
       const { data } = await api.post('/attempts/start', { testId: test.id });
+      // Allaqachon ishlangan (24 soat ichida) — natija sahifasini ochamiz
+      if (data.status && data.status !== 'IN_PROGRESS') {
+        router.push(`/result/${data.id}`);
+        return;
+      }
       router.push(`/test/${data.id}?testId=${test.id}`);
     } catch (e: any) {
       toast.error(e.response?.data?.message || 'Xatolik');
