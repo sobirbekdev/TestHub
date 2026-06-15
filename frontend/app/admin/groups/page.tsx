@@ -31,6 +31,14 @@ export default function AdminGroupsPage() {
     } catch { toast.error('Xatolik'); }
   };
 
+  const saveTgChat = async (groupId: number, telegramChatId: string) => {
+    try {
+      await api.patch(`/groups/${groupId}/telegram`, { telegramChatId });
+      toast.success('Telegram chat saqlandi');
+      load();
+    } catch { toast.error('Xatolik'); }
+  };
+
   const create = async () => {
     if (!name.trim()) return;
     try { await api.post('/groups', { name }); toast.success("Guruh yaratildi"); setName(''); load(); }
@@ -80,6 +88,17 @@ export default function AdminGroupsPage() {
                   </select>
                 </div>
               )}
+              <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ color: theme.text, opacity: 0.5, fontSize: 12, whiteSpace: 'nowrap' }}>TG chat ID:</span>
+                <input
+                  defaultValue={g.telegramChatId ?? ''}
+                  placeholder="masalan -1001234567890"
+                  onBlur={(e) => {
+                    const v = e.target.value.trim();
+                    if (v !== (g.telegramChatId ?? '')) saveTgChat(g.id, v);
+                  }}
+                  style={{ flex: 1, padding: '7px 10px', backgroundColor: theme.input, border: `1px solid ${theme.border}`, color: theme.text, borderRadius: 8, fontSize: 13, outline: 'none' }} />
+              </div>
             </div>
           ))}
         </div>

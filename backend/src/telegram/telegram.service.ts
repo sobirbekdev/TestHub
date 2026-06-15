@@ -330,12 +330,14 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       this.prisma.test.findUnique({ where: { id: testId }, select: { title: true } }),
       this.prisma.group.findUnique({
         where: { id: groupId },
-        select: { name: true, curatorId: true, curator: { select: { telegramId: true } } },
+        select: { name: true, telegramChatId: true, curatorId: true, curator: { select: { telegramId: true } } },
       }),
     ]);
     if (!group) return { ok: false, message: 'Guruh topilmadi' };
-    if (!group.curator?.telegramId) {
-      return { ok: false, message: 'Kurator Telegram bilan bog\'lanmagan' };
+    // Avval guruh chatiga, bo'lmasa zaxira sifatida kurator shaxsiy chatiga
+    const target = group.telegramChatId || (group.curator?.telegramId ? String(group.curator.telegramId) : null);
+    if (!target) {
+      return { ok: false, message: "Guruh Telegram chati ulanmagan (yoki kurator bog'lanmagan)" };
     }
 
     const pending = await this.getNonCompleters(testId, groupId);
@@ -347,7 +349,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       `📋 «${test?.title || 'Test'}» — ${group.name}\n\n` +
       `Ishlamaganlar (${pending.length}):\n${lines}`;
 
-    await this.sendMessage(Number(group.curator.telegramId), text);
+    await this.sendMessage(Number(target), text);
     return { ok: true, count: pending.length };
   }
 
@@ -549,11 +551,13 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
   async sendRankingImage(testId: number, groupId: number) {
     const group = await this.prisma.group.findUnique({
       where: { id: groupId },
-      select: { name: true, curator: { select: { telegramId: true } } },
+      select: { name: true, telegramChatId: true, curator: { select: { telegramId: true } } },
     });
     if (!group) return { ok: false, message: 'Guruh topilmadi' };
-    if (!group.curator?.telegramId) {
-      return { ok: false, message: "Kurator Telegram bilan bog'lanmagan" };
+    // Avval guruh chatiga, bo'lmasa zaxira sifatida kurator shaxsiy chatiga
+    const target = group.telegramChatId || (group.curator?.telegramId ? String(group.curator.telegramId) : null);
+    if (!target) {
+      return { ok: false, message: "Guruh Telegram chati ulanmagan (yoki kurator bog'lanmagan)" };
     }
 
     const ranking = await this.getGroupRanking(testId, groupId);
@@ -562,7 +566,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     }
 
     const taken = ranking.rows.filter((r) => r.taken).length;
-    const chatId = Number(group.curator.telegramId);
+    const chatId = Number(target);
     const header = `🏆 ${ranking.testTitle}\n${ranking.groupName} — reyting (${taken}/${ranking.rows.length} ishladi)`;
 
     try {

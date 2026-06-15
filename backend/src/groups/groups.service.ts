@@ -43,6 +43,12 @@ export class GroupsService {
     return this.prisma.group.update({ where: { id }, data: { curatorId } });
   }
 
+  // Guruhning Telegram chat ID sini saqlash (reyting shu chatga yuboriladi)
+  async setTelegramChat(id: number, telegramChatId: string | null) {
+    const value = telegramChatId?.trim() || null;
+    return this.prisma.group.update({ where: { id }, data: { telegramChatId: value } });
+  }
+
   async remove(id: number) {
     return this.prisma.group.delete({ where: { id } });
   }

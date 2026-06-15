@@ -35,6 +35,13 @@ export class GroupsController {
     return this.groupsService.setCurator(id, body.curatorId ?? null);
   }
 
+  @Patch(':id/telegram')
+  @UseGuards(RolesGuard)
+  @Roles('SUPER_ADMIN', 'TEACHER', 'CURATOR')
+  setTelegramChat(@Param('id', ParseIntPipe) id: number, @Body() body: { telegramChatId: string | null }) {
+    return this.groupsService.setTelegramChat(id, body.telegramChatId ?? null);
+  }
+
   @Delete(':id')
   @UseGuards(RolesGuard)
   @Roles('SUPER_ADMIN')

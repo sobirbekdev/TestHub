@@ -48,11 +48,12 @@ model OtpCode {
 // ─── GURUH ────────────────────────────────────────────────────────────────────
 
 model Group {
-  id        Int      @id @default(autoincrement())
-  name      String
-  curatorId Int?
-  curator   User?    @relation("CuratorGroups", fields: [curatorId], references: [id])
-  createdAt DateTime @default(now())
+  id             Int      @id @default(autoincrement())
+  name           String
+  curatorId      Int?
+  curator        User?    @relation("CuratorGroups", fields: [curatorId], references: [id])
+  telegramChatId String?  // Guruhning Telegram chat ID (reyting shu chatga yuboriladi)
+  createdAt      DateTime @default(now())
 
   users      User[]      @relation("GroupMembers")
   testGroups TestGroup[]
