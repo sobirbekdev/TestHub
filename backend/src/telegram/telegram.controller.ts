@@ -92,4 +92,12 @@ export class TelegramController {
   notifyCurator(@Body() body: { testId: number; groupId: number }) {
     return this.telegramService.notifyCurator(body.testId, body.groupId);
   }
+
+  // Guruh reytingini rasm sifatida kuratorga yuborish
+  @Post('send-ranking')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'TEACHER', 'CURATOR')
+  sendRanking(@Body() body: { testId: number; groupId: number }) {
+    return this.telegramService.sendRankingImage(body.testId, body.groupId);
+  }
 }

@@ -1,5 +1,8 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import axios from 'axios';
+import { createCanvas, GlobalFonts } from '@napi-rs/canvas';
+import * as path from 'path';
+import * as fs from 'fs';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from '../auth/auth.service';
 
@@ -9,6 +12,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
   private readonly baseUrl: string;
   private lastUpdateId = 0;
   private pollInterval: NodeJS.Timeout | null = null;
+  private fontsRegistered = false;
 
   constructor(
     private prisma: PrismaService,
@@ -331,6 +335,212 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
 
     await this.sendMessage(Number(group.curator.telegramId), text);
     return { ok: true, count: pending.length };
+  }
+
+  // ─── Guruh reytingi (rasm) ───────────────────────────────────────────────────
+  // Shriftlarni bir marta ro'yxatdan o'tkazamiz (Render'da tizim shrifti bo'lmasligi mumkin)
+  private ensureFonts() {
+    if (this.fontsRegistered) return;
+    try {
+      const dir = path.join(process.cwd(), 'assets', 'fonts');
+      const regular = path.join(dir, 'DejaVuSans.ttf');
+      const bold = path.join(dir, 'DejaVuSans-Bold.ttf');
+      if (fs.existsSync(regular)) GlobalFonts.register(fs.readFileSync(regular), 'THSans');
+      if (fs.existsSync(bold)) GlobalFonts.register(fs.readFileSync(bold), 'THSansBold');
+    } catch (e: any) {
+      this.logger.warn(`Shrift yuklanmadi: ${e?.message}`);
+    }
+    this.fontsRegistered = true;
+  }
+
+  // Guruh a'zolarining test natijalarini hisoblash (eng yaxshi urinish bo'yicha)
+  async getGroupRanking(testId: number, groupId: number) {
+    const [test, group, members] = await Promise.all([
+      this.prisma.test.findUnique({ where: { id: testId }, select: { title: true } }),
+      this.prisma.group.findUnique({ where: { id: groupId }, select: { name: true } }),
+      this.prisma.user.findMany({
+        where: { groupId },
+        select: { id: true, name: true, phone: true },
+      }),
+    ]);
+
+    const attempts = await this.prisma.attempt.findMany({
+      where: { testId, status: { not: 'IN_PROGRESS' }, user: { groupId } },
+      select: { userId: true, score: true },
+    });
+    const bestByUser = new Map<number, number>();
+    for (const a of attempts) {
+      const s = a.score ?? 0;
+      if (!bestByUser.has(a.userId) || s > (bestByUser.get(a.userId) as number)) {
+        bestByUser.set(a.userId, s);
+      }
+    }
+
+    const rows = members.map((m) => ({
+      name: m.name || m.phone || 'Foydalanuvchi',
+      score: bestByUser.has(m.id) ? Math.round(bestByUser.get(m.id) as number) : null,
+      taken: bestByUser.has(m.id),
+    }));
+    // Ishlaganlar — balli bo'yicha kamayish tartibida; ishlamaganlar oxirida
+    rows.sort((a, b) => {
+      if (a.taken !== b.taken) return a.taken ? -1 : 1;
+      return (b.score ?? 0) - (a.score ?? 0);
+    });
+
+    return {
+      testTitle: test?.title || 'Test',
+      groupName: group?.name || 'Guruh',
+      rows,
+    };
+  }
+
+  // Matnni kerakli kenglikka qisqartirish (uzun ismlar uchun)
+  private fitText(ctx: any, text: string, maxWidth: number): string {
+    if (ctx.measureText(text).width <= maxWidth) return text;
+    let t = text;
+    while (t.length > 1 && ctx.measureText(t + '…').width > maxWidth) t = t.slice(0, -1);
+    return t + '…';
+  }
+
+  // Reyting jadvalini PNG ko'rinishida chizish
+  private renderRankingImage(data: {
+    testTitle: string;
+    groupName: string;
+    rows: { name: string; score: number | null; taken: boolean }[];
+  }): Buffer {
+    this.ensureFonts();
+    const FONT = 'THSans';
+    const BOLD = 'THSansBold';
+    const W = 820;
+    const padX = 28;
+    const headerH = 132;
+    const rowH = 58;
+    const rows = data.rows;
+    const H = headerH + rows.length * rowH + 28;
+
+    const canvas = createCanvas(W, H);
+    const ctx = canvas.getContext('2d');
+
+    // Fon
+    ctx.fillStyle = '#0b1220';
+    ctx.fillRect(0, 0, W, H);
+
+    // Sarlavha paneli (gradient)
+    const grad = ctx.createLinearGradient(0, 0, W, 0);
+    grad.addColorStop(0, '#4f46e5');
+    grad.addColorStop(1, '#7c3aed');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, headerH);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `30px ${BOLD}`;
+    ctx.fillText('Reyting jadvali', padX, 48);
+    ctx.font = `20px ${BOLD}`;
+    ctx.fillStyle = 'rgba(255,255,255,0.95)';
+    ctx.fillText(this.fitText(ctx, data.testTitle, W - padX * 2), padX, 82);
+    ctx.font = `16px ${FONT}`;
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.fillText(this.fitText(ctx, `${data.groupName}`, W - padX * 2), padX, 110);
+
+    const medal = ['#fcd34d', '#cbd5e1', '#f59e0b']; // oltin / kumush / bronza
+    let rank = 0;
+
+    rows.forEach((r, i) => {
+      const y = headerH + i * rowH;
+      // Qator foni
+      ctx.fillStyle = i % 2 === 0 ? '#111c30' : '#0e1626';
+      ctx.fillRect(0, y, W, rowH);
+
+      const cy = y + rowH / 2;
+
+      // O'rin belgisi
+      const badgeX = padX + 18;
+      if (r.taken) {
+        rank += 1;
+        const color = rank <= 3 ? medal[rank - 1] : '#334155';
+        ctx.beginPath();
+        ctx.arc(badgeX, cy, 16, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.fillStyle = rank <= 3 ? '#1f2937' : '#e2e8f0';
+        ctx.font = `16px ${BOLD}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(rank), badgeX, cy + 1);
+      } else {
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.arc(badgeX, cy, 16, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#64748b';
+        ctx.font = `16px ${BOLD}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('–', badgeX, cy + 1);
+      }
+
+      // Ism
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.font = `19px ${r.taken ? BOLD : FONT}`;
+      ctx.fillStyle = r.taken ? '#e2e8f0' : '#64748b';
+      const nameX = badgeX + 28;
+      ctx.fillText(this.fitText(ctx, r.name, W - nameX - 150), nameX, cy + 1);
+
+      // Ball / holat (o'ngda)
+      ctx.textAlign = 'right';
+      if (r.taken) {
+        const s = r.score ?? 0;
+        const sc = s >= 60 ? '#10b981' : s >= 40 ? '#f59e0b' : '#ef4444';
+        ctx.font = `22px ${BOLD}`;
+        ctx.fillStyle = sc;
+        ctx.fillText(`${s}%`, W - padX, cy + 1);
+      } else {
+        ctx.font = `15px ${FONT}`;
+        ctx.fillStyle = '#64748b';
+        ctx.fillText('ishlamagan', W - padX, cy + 1);
+      }
+      ctx.textAlign = 'left';
+    });
+
+    return canvas.toBuffer('image/png');
+  }
+
+  // Telegram'ga rasm yuborish (multipart)
+  async sendPhoto(chatId: number, image: Buffer, caption?: string) {
+    const form = new FormData();
+    form.append('chat_id', String(chatId));
+    if (caption) form.append('caption', caption);
+    form.append('photo', new Blob([new Uint8Array(image)], { type: 'image/png' }), 'reyting.png');
+    await axios.post(`${this.baseUrl}/sendPhoto`, form);
+  }
+
+  // Guruh reytingini rasm sifatida kuratorga yuborish
+  async sendRankingImage(testId: number, groupId: number) {
+    const group = await this.prisma.group.findUnique({
+      where: { id: groupId },
+      select: { name: true, curator: { select: { telegramId: true } } },
+    });
+    if (!group) return { ok: false, message: 'Guruh topilmadi' };
+    if (!group.curator?.telegramId) {
+      return { ok: false, message: "Kurator Telegram bilan bog'lanmagan" };
+    }
+
+    const ranking = await this.getGroupRanking(testId, groupId);
+    if (ranking.rows.length === 0) {
+      return { ok: false, message: "Guruhda a'zolar yo'q" };
+    }
+
+    const taken = ranking.rows.filter((r) => r.taken).length;
+    try {
+      const image = this.renderRankingImage(ranking);
+      const caption = `🏆 ${ranking.testTitle}\n${ranking.groupName} — reyting (${taken}/${ranking.rows.length} ishladi)`;
+      await this.sendPhoto(Number(group.curator.telegramId), image, caption);
+      return { ok: true, count: taken };
+    } catch (e: any) {
+      this.logger.error(`Reyting rasmi yuborilmadi: ${e?.message}`);
+      return { ok: false, message: 'Rasm yaratib bo\'lmadi' };
+    }
   }
 
   // Oddiy matnli xabar

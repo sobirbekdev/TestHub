@@ -291,6 +291,16 @@ export default function AdminGroupTestsPage() {
     } catch (e: any) { toast.error(e.response?.data?.message || 'Xatolik'); }
   };
 
+  const sendRanking = async (gId: number) => {
+    if (!selected) return;
+    const t = toast.loading('Reyting yuborilmoqda...');
+    try {
+      const { data } = await api.post('/telegram/send-ranking', { testId: selected.id, groupId: gId });
+      if (data.ok) toast.success(`Reyting rasmi yuborildi (${data.count} kishi ishladi)`, { id: t });
+      else toast.error(data.message || 'Yuborilmadi', { id: t });
+    } catch (e: any) { toast.error(e.response?.data?.message || 'Xatolik', { id: t }); }
+  };
+
   const closeGroup = async (gId: number) => {
     if (!selected) return;
     if (!confirm('Guruhdan yopilsinmi?')) return;
@@ -640,6 +650,8 @@ export default function AdminGroupTestsPage() {
                               </button>
                               <button onClick={() => notify(a.groupId)}
                                 style={{ padding: '6px 10px', backgroundColor: '#10b98120', color: '#10b981', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12 }}>📨 Kuratorga</button>
+                              <button onClick={() => sendRanking(a.groupId)}
+                                style={{ padding: '6px 10px', backgroundColor: '#f59e0b20', color: '#f59e0b', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12 }}>🏆 Reyting</button>
                               <button onClick={() => closeGroup(a.groupId)}
                                 style={{ padding: '6px 10px', backgroundColor: '#ef444420', color: '#ef4444', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12 }}>Yopish</button>
                             </div>
