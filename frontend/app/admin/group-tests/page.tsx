@@ -23,6 +23,14 @@ function extractOrderNo(filename: string): number | null {
   return match ? parseInt(match[1]) : null;
 }
 
+// Vaqt yordamchilari — input maydonlari har doim ayni vaqtdan boshlab to'ldirilgan tursin
+const pad2 = (n: number) => String(n).padStart(2, '0');
+// datetime-local input formati: "YYYY-MM-DDTHH:mm" (mahalliy vaqt)
+const toLocalInput = (d: Date) =>
+  `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+// hozirgi vaqtdan h soat keyin
+const nowPlusHours = (h: number) => toLocalInput(new Date(Date.now() + h * 3600 * 1000));
+
 export default function AdminGroupTestsPage() {
   const { theme } = useThemeStore();
   const [tests, setTests] = useState<Test[]>([]);
@@ -50,8 +58,9 @@ export default function AdminGroupTestsPage() {
 
   // Guruhga biriktirish
   const [groupId, setGroupId] = useState<number | null>(null);
-  const [startsAt, setStartsAt] = useState('');
-  const [endsAt, setEndsAt] = useState('');
+  // Boshlanish = ayni vaqt, Tugash = +2 soat (har doim to'ldirilgan)
+  const [startsAt, setStartsAt] = useState(() => nowPlusHours(0));
+  const [endsAt, setEndsAt] = useState(() => nowPlusHours(2));
   const [assignSaving, setAssignSaving] = useState(false);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [pending, setPending] = useState<Record<number, { id: number; name: string | null; phone: string }[]>>({});
@@ -266,6 +275,9 @@ export default function AdminGroupTestsPage() {
         endsAt: endsAt ? new Date(endsAt).toISOString() : undefined,
       });
       toast.success('Test guruhga ochildi');
+      // Maydonlar yana ayni vaqt / +2 soat bilan to'ldirilgan tursin
+      setStartsAt(nowPlusHours(0));
+      setEndsAt(nowPlusHours(2));
       loadAssignments(selected.id);
     } catch (e: any) {
       toast.error(e.response?.data?.message || 'Xatolik');
@@ -313,7 +325,7 @@ export default function AdminGroupTestsPage() {
     const val = prompt(
       'Yangi dedlayn (masalan 2026-06-20 18:00). Bo\'sh qoldirsangiz — muddatsiz ochiq.\n' +
       'Diqqat: qayta ochilsa, avval ishlaganlar ham qaytadan ishlay oladi.',
-      '',
+      nowPlusHours(2).replace('T', ' '), // ayni vaqtdan +2 soat oldindan to'ldirilgan
     );
     if (val === null) return; // bekor qilindi
     const endsAt = val.trim() ? new Date(val.trim().replace(' ', 'T')) : undefined;
