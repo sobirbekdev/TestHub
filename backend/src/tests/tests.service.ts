@@ -180,19 +180,42 @@ export class TestsService {
   async openForGroup(testId: number, groupId: number, startsAt?: Date, endsAt?: Date) {
     await this.ensureExists(testId);
 
-    // Guruhga biriktirish + oynani belgilash
+    // Guruhga biriktirish + oynani belgilash.
+    // Yangi dedlayn belgilanganda reyting qaytadan yuborilishi uchun rankingSentAt=null.
     await this.prisma.testGroup.upsert({
       where: { testId_groupId: { testId, groupId } },
       create: { testId, groupId, startsAt: startsAt ?? null, endsAt: endsAt ?? null },
-      update: { startsAt: startsAt ?? null, endsAt: endsAt ?? null },
+      update: { startsAt: startsAt ?? null, endsAt: endsAt ?? null, rankingSentAt: null },
     });
 
     return { success: true, message: 'Test guruhga ochildi' };
   }
 
+  // ─── Testni guruh uchun QAYTA ochish ────────────────────────────────────────
+  // Yangi oyna boshlanadi (openedAt=hozir) — avval ishlaganlar ham qaytadan ishlay oladi.
+  async reopenForGroup(testId: number, groupId: number, endsAt?: Date) {
+    await this.ensureExists(testId);
+    const now = new Date();
+    await this.prisma.testGroup.upsert({
+      where: { testId_groupId: { testId, groupId } },
+      create: { testId, groupId, openedAt: now, startsAt: null, endsAt: endsAt ?? null },
+      update: { openedAt: now, startsAt: null, endsAt: endsAt ?? null, rankingSentAt: null },
+    });
+    return { success: true, message: 'Test qayta ochildi' };
+  }
+
   // ─── Testni guruhdan yopish ──────────────────────────────────────────────────
+  // O'chirmaymiz — dedlaynni hozirgi vaqtga qo'yamiz (yopilgan ko'rinadi, qayta ochish mumkin)
   async closeForGroup(testId: number, groupId: number) {
-    await this.prisma.testGroup.deleteMany({ where: { testId, groupId } });
+    const tg = await this.prisma.testGroup.findUnique({
+      where: { testId_groupId: { testId, groupId } },
+    });
+    if (tg) {
+      await this.prisma.testGroup.update({
+        where: { testId_groupId: { testId, groupId } },
+        data: { endsAt: new Date() },
+      });
+    }
     return { success: true, message: 'Test guruhdan yopildi' };
   }
 
@@ -216,9 +239,17 @@ export class TestsService {
       where: { userId, testId: { in: testIds } },
       select: { id: true, testId: true, status: true, score: true, startedAt: true },
     });
+
+    // Har bir test uchun joriy oyna boshlanishi (qayta ochilganda yangilanadi)
+    const windowStart = new Map<number, Date>();
+    for (const tg of testGroups) {
+      windowStart.set(tg.testId, tg.startsAt ?? tg.openedAt);
+    }
+    // Faqat joriy oyna ichidagi (yoki davom etayotgan) urinishni hisobga olamiz
     const attemptMap = new Map<number, (typeof attempts)[number]>();
     for (const a of attempts) {
-      // eng so'nggi urinishni saqlaymiz
+      const ws = windowStart.get(a.testId);
+      if (a.status !== 'IN_PROGRESS' && ws && a.startedAt < ws) continue; // eski oynadagi urinish — e'tiborsiz
       const prev = attemptMap.get(a.testId);
       if (!prev || a.startedAt > prev.startedAt) attemptMap.set(a.testId, a);
     }

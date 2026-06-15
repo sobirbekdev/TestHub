@@ -98,14 +98,15 @@ enum TestType {
 }
 
 model TestGroup {
-  id        Int      @id @default(autoincrement())
-  testId    Int
-  groupId   Int
-  test      Test     @relation(fields: [testId], references: [id])
-  group     Group    @relation(fields: [groupId], references: [id])
-  openedAt  DateTime @default(now())
-  startsAt  DateTime?
-  endsAt    DateTime?
+  id            Int       @id @default(autoincrement())
+  testId        Int
+  groupId       Int
+  test          Test      @relation(fields: [testId], references: [id])
+  group         Group     @relation(fields: [groupId], references: [id])
+  openedAt      DateTime  @default(now())   // oyna ochilgan/qayta ochilgan vaqt (bir martalik chegarasi shu paytdan)
+  startsAt      DateTime?
+  endsAt        DateTime?
+  rankingSentAt DateTime?                   // dedlayn tugagach reyting yuborilgan vaqt (null = hali yuborilmagan)
 
   @@unique([testId, groupId])
   @@map("test_groups")

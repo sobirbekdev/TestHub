@@ -32,38 +32,36 @@ export class AttemptsService {
       if (!payment) throw new ForbiddenException("Avval to'lov qiling");
     }
 
-    // Guruh (TOPIC) testi — oyna + bir martalik (24 soat) tekshiruvi
-    if (test.type === 'TOPIC' && !isAdmin) {
-      // 1) Admin belgilagan oyna (agar bo'lsa)
-      if (user?.groupId) {
-        const tg = await this.prisma.testGroup.findUnique({
-          where: { testId_groupId: { testId: dto.testId, groupId: user.groupId } },
-        });
-        if (tg) {
-          const now = new Date();
-          if (tg.startsAt && now < tg.startsAt) {
-            throw new ForbiddenException('Test hali ochilmagan');
-          }
-          if (tg.endsAt && now > tg.endsAt) {
-            throw new ForbiddenException('Test vaqti tugagan');
-          }
-        }
-      }
-
-      // 2) Bir martalik qoida: oxirgi 24 soatda tugatgan bo'lsa — eski natija ko'rsatiladi.
-      //    24 soatdan keyin qayta ishlashga ruxsat (yangilanadi).
-      const lastDone = await this.prisma.attempt.findFirst({
-        where: { userId, testId: dto.testId, status: { not: 'IN_PROGRESS' } },
-        orderBy: { finishedAt: 'desc' },
+    // Guruh (TOPIC) testi — oyna + oyna ichida bir martalik tekshiruvi
+    if (test.type === 'TOPIC' && !isAdmin && user?.groupId) {
+      const tg = await this.prisma.testGroup.findUnique({
+        where: { testId_groupId: { testId: dto.testId, groupId: user.groupId } },
       });
-      if (lastDone) {
-        const finishedAt = lastDone.finishedAt || lastDone.startedAt;
-        const ageMs = Date.now() - new Date(finishedAt).getTime();
-        if (ageMs < 24 * 60 * 60 * 1000) {
-          // Hali 24 soat o'tmagan — eski natijani qaytaramiz (frontend natija sahifasiga yo'naltiradi)
+      if (tg) {
+        const now = new Date();
+        if (tg.startsAt && now < tg.startsAt) {
+          throw new ForbiddenException('Test hali ochilmagan');
+        }
+        if (tg.endsAt && now > tg.endsAt) {
+          throw new ForbiddenException('Test vaqti tugagan');
+        }
+
+        // Bir martalik qoida: JORIY oyna ichida tugatgan bo'lsa — eski natija ko'rsatiladi.
+        // Qayta ochilganda (openedAt yangilanadi) oldingi urinishlar e'tiborsiz qoladi → qaytadan ishlash mumkin.
+        const windowStart = tg.startsAt ?? tg.openedAt;
+        const lastDone = await this.prisma.attempt.findFirst({
+          where: {
+            userId,
+            testId: dto.testId,
+            status: { not: 'IN_PROGRESS' },
+            startedAt: { gte: windowStart },
+          },
+          orderBy: { finishedAt: 'desc' },
+        });
+        if (lastDone) {
+          // Hali shu oynada ishlagan — eski natijani qaytaramiz (frontend natija sahifasiga yo'naltiradi)
           return lastDone;
         }
-        // 24 soatdan oshgan — pastda yangi urinish yaratiladi
       }
     }
 

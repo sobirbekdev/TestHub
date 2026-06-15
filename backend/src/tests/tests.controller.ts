@@ -166,6 +166,21 @@ export class TestsController {
     );
   }
 
+  // POST /api/tests/:id/reopen-group — guruh uchun qayta ochish (yangi oyna)
+  @Post(':id/reopen-group')
+  @UseGuards(RolesGuard)
+  @Roles('SUPER_ADMIN', 'TEACHER', 'CURATOR')
+  reopenForGroup(
+    @Param('id', ParseIntPipe) testId: number,
+    @Body() body: { groupId: number; endsAt?: string },
+  ) {
+    return this.testsService.reopenForGroup(
+      testId,
+      body.groupId,
+      body.endsAt ? new Date(body.endsAt) : undefined,
+    );
+  }
+
   // POST /api/tests/:id/close-group — guruhdan yopish
   @Post(':id/close-group')
   @UseGuards(RolesGuard)

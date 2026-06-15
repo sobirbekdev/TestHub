@@ -303,9 +303,29 @@ export default function AdminGroupTestsPage() {
 
   const closeGroup = async (gId: number) => {
     if (!selected) return;
-    if (!confirm('Guruhdan yopilsinmi?')) return;
+    if (!confirm('Guruhdan yopilsinmi? (dedlayn hozirgi vaqtga qo\'yiladi)')) return;
     await api.post(`/tests/${selected.id}/close-group`, { groupId: gId }).catch(() => {});
     loadAssignments(selected.id);
+  };
+
+  const reopenGroup = async (gId: number) => {
+    if (!selected) return;
+    const val = prompt(
+      'Yangi dedlayn (masalan 2026-06-20 18:00). Bo\'sh qoldirsangiz — muddatsiz ochiq.\n' +
+      'Diqqat: qayta ochilsa, avval ishlaganlar ham qaytadan ishlay oladi.',
+      '',
+    );
+    if (val === null) return; // bekor qilindi
+    const endsAt = val.trim() ? new Date(val.trim().replace(' ', 'T')) : undefined;
+    if (endsAt && isNaN(endsAt.getTime())) return toast.error('Sana formati noto\'g\'ri');
+    try {
+      await api.post(`/tests/${selected.id}/reopen-group`, {
+        groupId: gId,
+        endsAt: endsAt ? endsAt.toISOString() : undefined,
+      });
+      toast.success('Test qayta ochildi');
+      loadAssignments(selected.id);
+    } catch (e: any) { toast.error(e.response?.data?.message || 'Xatolik'); }
   };
 
   const inp: React.CSSProperties = {
@@ -640,7 +660,12 @@ export default function AdminGroupTestsPage() {
                         <div key={a.id} style={{ padding: '10px 12px', backgroundColor: theme.input, borderRadius: 10 }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
                             <div>
-                              <p style={{ color: theme.text, fontWeight: 600, fontSize: 14 }}>{a.group.name}</p>
+                              <p style={{ color: theme.text, fontWeight: 600, fontSize: 14 }}>
+                                {a.group.name}
+                                {a.endsAt && new Date(a.endsAt) < new Date() && (
+                                  <span style={{ marginLeft: 8, fontSize: 11, color: '#ef4444', fontWeight: 500 }}>⛔ tugagan</span>
+                                )}
+                              </p>
                               <p style={{ color: theme.text, opacity: 0.5, fontSize: 12, marginTop: 2 }}>🔓 {fmt(a.startsAt)} → ⏳ {fmt(a.endsAt)}</p>
                             </div>
                             <div style={{ display: 'flex', gap: 6 }}>
@@ -652,6 +677,8 @@ export default function AdminGroupTestsPage() {
                                 style={{ padding: '6px 10px', backgroundColor: '#10b98120', color: '#10b981', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12 }}>📨 Kuratorga</button>
                               <button onClick={() => sendRanking(a.groupId)}
                                 style={{ padding: '6px 10px', backgroundColor: '#f59e0b20', color: '#f59e0b', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12 }}>🏆 Reyting</button>
+                              <button onClick={() => reopenGroup(a.groupId)}
+                                style={{ padding: '6px 10px', backgroundColor: '#6366f120', color: '#6366f1', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12 }}>🔄 Qayta ochish</button>
                               <button onClick={() => closeGroup(a.groupId)}
                                 style={{ padding: '6px 10px', backgroundColor: '#ef444420', color: '#ef4444', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12 }}>Yopish</button>
                             </div>

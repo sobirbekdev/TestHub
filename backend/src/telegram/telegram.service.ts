@@ -15,6 +15,8 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
   private readonly baseUrl: string;
   private lastUpdateId = 0;
   private pollInterval: NodeJS.Timeout | null = null;
+  private rankingInterval: NodeJS.Timeout | null = null;
+  private rankingTick = false; // bir vaqtning o'zida ikki marta ishlamasligi uchun
   private fontsRegistered = false;
   private canvasLib: any = undefined; // undefined = hali urinilmagan; null = yuklanmadi
 
@@ -56,10 +58,18 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       // Lokal dev — webhook URL yo'q, polling ishlatamiz
       this.startPolling();
     }
+
+    // Dedlayn tugagan guruhlarga avtomatik reyting yuborish — har 60 soniyada tekshiramiz
+    this.rankingInterval = setInterval(() => {
+      this.sendDueRankings().catch((e) =>
+        this.logger.warn(`Avto-reyting xatosi: ${e?.message}`),
+      );
+    }, 60 * 1000);
   }
 
   onModuleDestroy() {
     if (this.pollInterval) clearInterval(this.pollInterval);
+    if (this.rankingInterval) clearInterval(this.rankingInterval);
   }
 
   private startPolling() {
@@ -575,6 +585,38 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     } catch (e: any) {
       this.logger.error(`Reyting yuborilmadi: ${e?.message}`);
       return { ok: false, message: "Reyting yuborib bo'lmadi" };
+    }
+  }
+
+  // Dedlayni tugagan, lekin reyting yuborilmagan guruhlarni topib avtomatik yuborish
+  async sendDueRankings() {
+    if (this.rankingTick) return; // oldingi tekshiruv hali tugamagan bo'lsa o'tkazib yuboramiz
+    this.rankingTick = true;
+    try {
+      const now = new Date();
+      const due = await this.prisma.testGroup.findMany({
+        where: {
+          endsAt: { not: null, lte: now },
+          rankingSentAt: null,
+          test: { type: 'TOPIC' },
+        },
+        select: { id: true, testId: true, groupId: true },
+        take: 20,
+      });
+      for (const tg of due) {
+        try {
+          await this.sendRankingImage(tg.testId, tg.groupId);
+        } catch (e: any) {
+          this.logger.warn(`Avto-reyting yuborilmadi (tg=${tg.id}): ${e?.message}`);
+        }
+        // Muvaffaqiyatli yoki yo'q — qayta-qayta urinmaslik uchun belgilab qo'yamiz
+        await this.prisma.testGroup.update({
+          where: { id: tg.id },
+          data: { rankingSentAt: new Date() },
+        });
+      }
+    } finally {
+      this.rankingTick = false;
     }
   }
 
