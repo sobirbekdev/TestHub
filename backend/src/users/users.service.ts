@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Role } from '@prisma/client';
 
@@ -51,15 +51,27 @@ export class UsersService {
   async remove(id: number) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('Foydalanuvchi topilmadi');
-    return this.prisma.$transaction(async (tx) => {
-      await tx.attempt.deleteMany({ where: { userId: id } });
-      await tx.payment.deleteMany({ where: { userId: id } });
-      // otp_codes.phone → users.phone FK (ON DELETE RESTRICT) bor — avval o'chiramiz
-      await tx.otpCode.deleteMany({ where: { phone: user.phone } });
-      // Bu odam biror guruhga kurator bo'lsa — kuratorlikni bo'shatamiz
-      await tx.group.updateMany({ where: { curatorId: id }, data: { curatorId: null } });
-      return tx.user.delete({ where: { id } });
-    });
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        // Bog'liq yozuvlarni avval Answer (cascade) bilan birga o'chiramiz
+        const attempts = await tx.attempt.findMany({ where: { userId: id }, select: { id: true } });
+        const attemptIds = attempts.map((a) => a.id);
+        if (attemptIds.length) {
+          await tx.answer.deleteMany({ where: { attemptId: { in: attemptIds } } });
+          await tx.attempt.deleteMany({ where: { id: { in: attemptIds } } });
+        }
+        await tx.payment.deleteMany({ where: { userId: id } });
+        // otp_codes.phone → users.phone FK (ON DELETE RESTRICT) bor — avval o'chiramiz
+        await tx.otpCode.deleteMany({ where: { phone: user.phone } });
+        // Bu odam biror guruhga kurator bo'lsa — kuratorlikni bo'shatamiz
+        await tx.group.updateMany({ where: { curatorId: id }, data: { curatorId: null } });
+        return tx.user.delete({ where: { id } });
+      });
+    } catch (e: any) {
+      // Asl sababni frontendga ko'rsatamiz (qaysi bog'lanish to'sayotganini bilish uchun)
+      const detail = e?.meta?.field_name || e?.meta?.constraint || e?.code || e?.message || 'nomalum';
+      throw new BadRequestException(`O'chirib bo'lmadi: ${detail}`);
+    }
   }
 
   async updateGroup(id: number, groupId: number | null) {
