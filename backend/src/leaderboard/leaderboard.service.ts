@@ -13,9 +13,21 @@ interface RankRow {
 export class LeaderboardService {
   constructor(private prisma: PrismaService) {}
 
-  // ─── Umumiy reyting (butun foydalanuvchilar) ───────────────────────────────
-  async getGlobal(limit = 100) {
-    return this.aggregateRanking({ status: 'COMPLETED' }, limit);
+  // Ko'ruvchining guruhi bo'yicha filtr. Guruhi bo'lsa — faqat o'sha guruh,
+  // bo'lmasa (guruhsiz) — barcha foydalanuvchilar (umumiy).
+  private async viewerScope(viewerId?: number): Promise<Prisma.AttemptWhereInput> {
+    if (!viewerId) return {};
+    const viewer = await this.prisma.user.findUnique({
+      where: { id: viewerId },
+      select: { groupId: true },
+    });
+    return viewer?.groupId ? { user: { groupId: viewer.groupId } } : {};
+  }
+
+  // ─── Umumiy reyting — ko'ruvchining o'z guruhi ichida ───────────────────────
+  async getGlobal(viewerId?: number, limit = 100) {
+    const scope = await this.viewerScope(viewerId);
+    return this.aggregateRanking({ status: 'COMPLETED', ...scope }, limit);
   }
 
   // ─── Guruh reytingi ───────────────────────────────────────────────────────
@@ -31,12 +43,13 @@ export class LeaderboardService {
     });
   }
 
-  // ─── Kunlik reyting ─────────────────────────────────────────────────────────
-  async getDaily() {
+  // ─── Kunlik reyting — ko'ruvchining o'z guruhi ichida ───────────────────────
+  async getDaily(viewerId?: number) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const scope = await this.viewerScope(viewerId);
     return this.aggregateRanking(
-      { status: 'COMPLETED', finishedAt: { gte: today } },
+      { status: 'COMPLETED', finishedAt: { gte: today }, ...scope },
       50,
     );
   }
@@ -191,7 +204,8 @@ export class LeaderboardService {
     return rows.map((r, idx) => ({
       rank: idx + 1,
       userId: r.userId,
-      name: userMap.get(r.userId)?.name || 'Nomsiz',
+      // Ism bo'sh bo'lsa '' qaytaramiz — frontend telefon oxirini ko'rsatadi
+      name: userMap.get(r.userId)?.name?.trim() || '',
       phone: userMap.get(r.userId)?.phone || '',
       groupName: userMap.get(r.userId)?.group?.name || null,
       avgScore: Math.round(r.avgScore * 10) / 10,

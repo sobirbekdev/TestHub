@@ -9,8 +9,8 @@ export class LeaderboardController {
   constructor(private leaderboardService: LeaderboardService) {}
 
   @Get('global')
-  getGlobal() {
-    return this.leaderboardService.getGlobal();
+  getGlobal(@CurrentUser() user: any) {
+    return this.leaderboardService.getGlobal(user.id);
   }
 
   // Bitta test bo'yicha leaderboard (natija sahifasi uchun)
@@ -31,8 +31,8 @@ export class LeaderboardController {
   }
 
   @Get('daily')
-  getDaily() {
-    return this.leaderboardService.getDaily();
+  getDaily(@CurrentUser() user: any) {
+    return this.leaderboardService.getDaily(user.id);
   }
 
   @Get('my-stats')
