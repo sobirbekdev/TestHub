@@ -6,10 +6,20 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTestDto, UpdateTestDto, TestFilterDto, UpsertTestQuestionDto } from './dto/tests.dto';
 import { Role } from '@prisma/client';
+import { TelegramService } from '../telegram/telegram.service';
 
 @Injectable()
 export class TestsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private telegram: TelegramService,
+  ) {}
+
+  // Server uyqudan uyg'onganida (Render bepul tarif) o'tib ketgan dedlaynlar
+  // bo'yicha reytinglarni darhol yuborib yuboramiz — taymerni kutmasdan.
+  private flushDueRankings() {
+    this.telegram.sendDueRankings().catch(() => {});
+  }
 
   // ─── Barcha testlarni olish (foydalanuvchi uchun) ───────────────────────────
   async findAll(filter: TestFilterDto, userId: number) {
@@ -221,6 +231,7 @@ export class TestsService {
 
   // ─── Guruh testlari (student uchun): qulf holati bilan ───────────────────────
   async getGroupTests(userId: number) {
+    this.flushDueRankings(); // sahifa ochilganda o'tib ketgan reytinglarni yuboramiz
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user?.groupId) return { groupId: null, tests: [] };
 
@@ -282,6 +293,7 @@ export class TestsService {
 
   // ─── Guruh testlari (kurator/admin uchun): biriktirilgan guruhlar ────────────
   async getTestGroupWindows(testId: number) {
+    this.flushDueRankings(); // admin sahifani ochganda o'tib ketgan reytinglar yuboriladi
     await this.ensureExists(testId);
     return this.prisma.testGroup.findMany({
       where: { testId },
