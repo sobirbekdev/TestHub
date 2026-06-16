@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -20,6 +21,9 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  // VAQTINCHALIK: kutilmagan 500 xatolarning asl sababini ko'rsatish
+  app.useGlobalFilters(new AllExceptionsFilter());
 
   // CORS (frontend uchun) — FRONTEND_URL env orqali production domenini qo'shamiz
   const allowedOrigins = [
@@ -52,7 +56,7 @@ async function bootstrap() {
 
   // Health check (Render uchun) — global prefix DAN OLDIN, har doim 200 qaytaradi
   app.use('/health', (req: any, res: any) => {
-    res.status(200).json({ status: 'ok', build: 'delete-fix-v2', commit: process.env.RENDER_GIT_COMMIT || 'local' });
+    res.status(200).json({ status: 'ok', build: 'diag-v3', commit: process.env.RENDER_GIT_COMMIT || 'local' });
   });
 
   // Global prefix
