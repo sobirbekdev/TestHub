@@ -46,6 +46,20 @@ export class UsersService {
     });
   }
 
+  // Foydalanuvchini butunlay o'chirish. FK cheklovlari uchun avval bog'liq
+  // yozuvlarni (urinishlar, to'lovlar) o'chiramiz, kurator bo'lsa guruhlardan ajratamiz.
+  async remove(id: number) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException('Foydalanuvchi topilmadi');
+    return this.prisma.$transaction(async (tx) => {
+      await tx.attempt.deleteMany({ where: { userId: id } });
+      await tx.payment.deleteMany({ where: { userId: id } });
+      // Bu odam biror guruhga kurator bo'lsa — kuratorlikni bo'shatamiz
+      await tx.group.updateMany({ where: { curatorId: id }, data: { curatorId: null } });
+      return tx.user.delete({ where: { id } });
+    });
+  }
+
   async updateGroup(id: number, groupId: number | null) {
     if (groupId !== null) {
       const group = await this.prisma.group.findUnique({ where: { id: groupId } });

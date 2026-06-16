@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, ParseIntPipe, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -45,5 +45,21 @@ export class UsersController {
   @Patch('me/group')
   updateMyGroup(@CurrentUser() user: any, @Body() body: { groupId: number | null }) {
     return this.usersService.updateGroup(user.id, body.groupId ?? null);
+  }
+
+  // Admin: istalgan foydalanuvchini guruhga qo'shish / guruhdan chiqarish (null)
+  @Patch(':id/group')
+  @UseGuards(RolesGuard)
+  @Roles('SUPER_ADMIN', 'TEACHER')
+  setUserGroup(@Param('id', ParseIntPipe) id: number, @Body() body: { groupId: number | null }) {
+    return this.usersService.updateGroup(id, body.groupId ?? null);
+  }
+
+  // Admin: foydalanuvchini butunlay o'chirish (urinishlar/to'lovlar ham o'chadi)
+  @Delete(':id')
+  @UseGuards(RolesGuard)
+  @Roles('SUPER_ADMIN')
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.usersService.remove(id);
   }
 }

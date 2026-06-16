@@ -384,17 +384,28 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
 
   // Guruh a'zolarining test natijalarini hisoblash (eng yaxshi urinish bo'yicha)
   async getGroupRanking(testId: number, groupId: number) {
-    const [test, group, members] = await Promise.all([
+    const [test, group, members, tg] = await Promise.all([
       this.prisma.test.findUnique({ where: { id: testId }, select: { title: true } }),
       this.prisma.group.findUnique({ where: { id: groupId }, select: { name: true } }),
       this.prisma.user.findMany({
         where: { groupId },
         select: { id: true, name: true, phone: true },
       }),
+      this.prisma.testGroup.findUnique({
+        where: { testId_groupId: { testId, groupId } },
+        select: { openedAt: true, startsAt: true },
+      }),
     ]);
 
+    // Faqat joriy oyna ichidagi urinishlar — qayta ochilganda eski natijalar aralashmasin
+    const windowStart = tg ? (tg.startsAt ?? tg.openedAt) : undefined;
     const attempts = await this.prisma.attempt.findMany({
-      where: { testId, status: { not: 'IN_PROGRESS' }, user: { groupId } },
+      where: {
+        testId,
+        status: { not: 'IN_PROGRESS' },
+        user: { groupId },
+        ...(windowStart ? { startedAt: { gte: windowStart } } : {}),
+      },
       select: { userId: true, score: true },
     });
     const bestByUser = new Map<number, number>();
