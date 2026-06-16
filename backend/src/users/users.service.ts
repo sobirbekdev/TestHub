@@ -49,27 +49,31 @@ export class UsersService {
   // Foydalanuvchini butunlay o'chirish. FK cheklovlari uchun avval bog'liq
   // yozuvlarni (urinishlar, to'lovlar) o'chiramiz, kurator bo'lsa guruhlardan ajratamiz.
   async remove(id: number) {
-    const user = await this.prisma.user.findUnique({ where: { id } });
-    if (!user) throw new NotFoundException('Foydalanuvchi topilmadi');
     try {
-      return await this.prisma.$transaction(async (tx) => {
-        // Bog'liq yozuvlarni avval Answer (cascade) bilan birga o'chiramiz
-        const attempts = await tx.attempt.findMany({ where: { userId: id }, select: { id: true } });
-        const attemptIds = attempts.map((a) => a.id);
-        if (attemptIds.length) {
-          await tx.answer.deleteMany({ where: { attemptId: { in: attemptIds } } });
-          await tx.attempt.deleteMany({ where: { id: { in: attemptIds } } });
-        }
-        await tx.payment.deleteMany({ where: { userId: id } });
-        // otp_codes.phone → users.phone FK (ON DELETE RESTRICT) bor — avval o'chiramiz
-        await tx.otpCode.deleteMany({ where: { phone: user.phone } });
-        // Bu odam biror guruhga kurator bo'lsa — kuratorlikni bo'shatamiz
-        await tx.group.updateMany({ where: { curatorId: id }, data: { curatorId: null } });
-        return tx.user.delete({ where: { id } });
-      }, { timeout: 20000, maxWait: 20000 });
+      const user = await this.prisma.user.findUnique({ where: { id } });
+      if (!user) throw new NotFoundException('Foydalanuvchi topilmadi');
+      // Bog'liq yozuvlarni ketma-ket o'chiramiz (transaction'siz — interactive
+      // transaction 5s limiti va boshqa muammolarni chetlab o'tish uchun).
+      const attempts = await this.prisma.attempt.findMany({ where: { userId: id }, select: { id: true } });
+      const attemptIds = attempts.map((a) => a.id);
+      if (attemptIds.length) {
+        await this.prisma.answer.deleteMany({ where: { attemptId: { in: attemptIds } } });
+        await this.prisma.attempt.deleteMany({ where: { id: { in: attemptIds } } });
+      }
+      await this.prisma.payment.deleteMany({ where: { userId: id } });
+      // otp_codes.phone → users.phone FK (ON DELETE RESTRICT) bor — avval o'chiramiz
+      await this.prisma.otpCode.deleteMany({ where: { phone: user.phone } });
+      // Bu odam biror guruhga kurator bo'lsa — kuratorlikni bo'shatamiz
+      await this.prisma.group.updateMany({ where: { curatorId: id }, data: { curatorId: null } });
+      return await this.prisma.user.delete({ where: { id } });
     } catch (e: any) {
-      // Asl sababni frontendga ko'rsatamiz (qaysi bog'lanish to'sayotganini bilish uchun)
-      const detail = e?.meta?.field_name || e?.meta?.constraint || e?.code || e?.message || 'nomalum';
+      if (e instanceof NotFoundException) throw e;
+      // To'liq tafsilotni Render logiga yozamiz
+      // eslint-disable-next-line no-console
+      console.error('[users.remove] xato:', e);
+      const detail = [e?.code, e?.meta?.field_name || e?.meta?.constraint, e?.message]
+        .filter(Boolean)
+        .join(' | ') || 'nomalum';
       throw new BadRequestException(`O'chirib bo'lmadi: ${detail}`);
     }
   }
