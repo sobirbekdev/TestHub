@@ -66,7 +66,7 @@ export class UsersService {
         // Bu odam biror guruhga kurator bo'lsa — kuratorlikni bo'shatamiz
         await tx.group.updateMany({ where: { curatorId: id }, data: { curatorId: null } });
         return tx.user.delete({ where: { id } });
-      });
+      }, { timeout: 20000, maxWait: 20000 });
     } catch (e: any) {
       // Asl sababni frontendga ko'rsatamiz (qaysi bog'lanish to'sayotganini bilish uchun)
       const detail = e?.meta?.field_name || e?.meta?.constraint || e?.code || e?.message || 'nomalum';
