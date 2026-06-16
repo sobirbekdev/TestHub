@@ -580,13 +580,12 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     const chatId = Number(target);
     const header = `🏆 ${ranking.testTitle}\n${ranking.groupName} — reyting (${taken}/${ranking.rows.length} ishladi)`;
 
+    if (Number.isNaN(chatId)) {
+      return { ok: false, message: `Chat ID noto'g'ri: "${target}"` };
+    }
+
     try {
       const image = this.renderRankingImage(ranking);
-      if (image) {
-        await this.sendPhoto(chatId, image, header);
-        return { ok: true, count: taken, mode: 'image' };
-      }
-      // Rasm chizilmasa (canvas yo'q) — matn ko'rinishida yuboramiz
       let rank = 0;
       const lines = ranking.rows
         .map((r) =>
@@ -595,11 +594,18 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
             : `–. ${r.name} — ishlamagan`,
         )
         .join('\n');
-      await this.sendMessage(chatId, `${header}\n\n${lines}`);
+      if (image) {
+        await this.sendPhoto(chatId, image, header);
+        return { ok: true, count: taken, mode: 'image' };
+      }
+      // Rasm chizilmasa (canvas yo'q) — matn ko'rinishida yuboramiz
+      await this.sendMessageOrThrow(chatId, `${header}\n\n${lines}`);
       return { ok: true, count: taken, mode: 'text' };
     } catch (e: any) {
-      this.logger.error(`Reyting yuborilmadi: ${e?.message}`);
-      return { ok: false, message: "Reyting yuborib bo'lmadi" };
+      // Telegram API asl sababni "description" da qaytaradi
+      const desc = e?.response?.data?.description || e?.message || 'nomalum';
+      this.logger.error(`Reyting yuborilmadi (chat=${chatId}): ${desc}`);
+      return { ok: false, message: `Telegram: ${desc}` };
     }
   }
 
@@ -642,13 +648,18 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  // Oddiy matnli xabar
+  // Oddiy matnli xabar (xatoni yutadi — fon jarayonlar uchun)
   async sendMessage(chatId: number, text: string) {
     try {
       await axios.post(`${this.baseUrl}/sendMessage`, { chat_id: chatId, text });
     } catch (e: any) {
       this.logger.warn(`sendMessage xato (${chatId}): ${e?.message}`);
     }
+  }
+
+  // Matnli xabar — xato bo'lsa otadi (chaqiruvchi asl sababni bilishi uchun)
+  private async sendMessageOrThrow(chatId: number, text: string) {
+    await axios.post(`${this.baseUrl}/sendMessage`, { chat_id: chatId, text });
   }
 
   // Bot menyu tugmasini Mini App'ga sozlash
