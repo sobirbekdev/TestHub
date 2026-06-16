@@ -45,7 +45,16 @@ export default function AdminUsersPage() {
       await api.delete(`/users/${id}`);
       setUsers((prev) => prev.filter((u) => u.id !== id));
       toast.success('Foydalanuvchi o\'chirildi');
-    } catch (e: any) { toast.error(e.response?.data?.message || 'Xatolik'); }
+    } catch (e: any) {
+      // 404 — bu foydalanuvchi allaqachon o'chirilgan (ro'yxat eskirgan).
+      // Qatorni olib tashlaymiz va xato emas, "o'chirilgan" deb ko'rsatamiz.
+      if (e.response?.status === 404) {
+        setUsers((prev) => prev.filter((u) => u.id !== id));
+        toast.success('Foydalanuvchi o\'chirilgan');
+        return;
+      }
+      toast.error(e.response?.data?.message || 'Xatolik');
+    }
   };
 
   const filtered = users.filter((u) => {

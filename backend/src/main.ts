@@ -56,7 +56,7 @@ async function bootstrap() {
 
   // Health check (Render uchun) — global prefix DAN OLDIN, har doim 200 qaytaradi
   app.use('/health', (req: any, res: any) => {
-    res.status(200).json({ status: 'ok', build: 'diag-v3', commit: process.env.RENDER_GIT_COMMIT || 'local' });
+    res.status(200).json({ status: 'ok', commit: process.env.RENDER_GIT_COMMIT || 'local' });
   });
 
   // Global prefix

@@ -6,9 +6,9 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 
-// VAQTINCHALIK DIAGNOSTIKA FILTRI:
-// Kutilmagan (HttpException bo'lmagan) xatolarning asl nomi, xabari va stack'ini
-// javob tanasiga chiqaradi. Shu orqali 500 sababini frontenddan ko'rish mumkin.
+// Global xatolik filtri:
+// Kutilmagan (HttpException bo'lmagan) xatolarni "Internal server error" o'rniga
+// o'qishli xabar bilan qaytaradi. To'liq stack faqat server logiga yoziladi.
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
@@ -21,17 +21,16 @@ export class AllExceptionsFilter implements ExceptionFilter {
       return res.status(status).json(exception.getResponse());
     }
 
-    // Kutilmagan xato — to'liq tafsilot bilan
+    // Kutilmagan xato — to'liq stack'ni faqat logga yozamiz
     const err = exception as any;
     // eslint-disable-next-line no-console
     console.error('[AllExceptionsFilter] kutilmagan xato:', err);
+    const detail = [err?.code, err?.meta?.field_name || err?.meta?.constraint, err?.message]
+      .filter(Boolean)
+      .join(' | ') || 'nomalum xato';
     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       statusCode: 500,
-      _diag: true,
-      name: err?.name || null,
-      code: err?.code || null,
-      message: err?.message || String(err),
-      stack: (err?.stack || '').split('\n').slice(0, 6),
+      message: `Server xatosi: ${detail}`,
     });
   }
 }
