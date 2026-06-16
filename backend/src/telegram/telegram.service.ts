@@ -619,16 +619,23 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
         take: 20,
       });
       for (const tg of due) {
+        let res: { ok: boolean; message?: string } | null = null;
         try {
-          await this.sendRankingImage(tg.testId, tg.groupId);
+          res = await this.sendRankingImage(tg.testId, tg.groupId);
         } catch (e: any) {
           this.logger.warn(`Avto-reyting yuborilmadi (tg=${tg.id}): ${e?.message}`);
         }
-        // Muvaffaqiyatli yoki yo'q — qayta-qayta urinmaslik uchun belgilab qo'yamiz
-        await this.prisma.testGroup.update({
-          where: { id: tg.id },
-          data: { rankingSentAt: new Date() },
-        });
+        // Faqat muvaffaqiyatli yoki qayta urinish foydasiz holatlarda belgilaymiz.
+        // Chat ulanmagan / bot guruhda yo'q bo'lsa — belgilamaymiz, keyin qayta urinadi
+        // (admin chat ID kiritgach yoki botni guruhga qo'shgach o'zi yuboriladi).
+        const permanent =
+          res?.message === "Guruhda a'zolar yo'q" || res?.message === 'Guruh topilmadi';
+        if (res?.ok || permanent) {
+          await this.prisma.testGroup.update({
+            where: { id: tg.id },
+            data: { rankingSentAt: new Date() },
+          });
+        }
       }
     } finally {
       this.rankingTick = false;
