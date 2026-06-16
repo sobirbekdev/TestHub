@@ -65,7 +65,10 @@ export class UsersService {
       await this.prisma.otpCode.deleteMany({ where: { phone: user.phone } });
       // Bu odam biror guruhga kurator bo'lsa — kuratorlikni bo'shatamiz
       await this.prisma.group.updateMany({ where: { curatorId: id }, data: { curatorId: null } });
-      return await this.prisma.user.delete({ where: { id } });
+      await this.prisma.user.delete({ where: { id } });
+      // MUHIM: user obyektini qaytarmaymiz — unda telegramId (BigInt) bor,
+      // u JSON'ga aylanmaydi ("Do not know how to serialize a BigInt") va 500 beradi.
+      return { success: true, id };
     } catch (e: any) {
       if (e instanceof NotFoundException) throw e;
       // To'liq tafsilotni Render logiga yozamiz

@@ -6,6 +6,12 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import * as path from 'path';
 import * as fs from 'fs';
 
+// BigInt'ni JSON'ga aylantirish (telegramId kabi maydonlar uchun) — aks holda
+// "Do not know how to serialize a BigInt" xatosi 500 beradi.
+(BigInt.prototype as any).toJSON = function () {
+  return this.toString();
+};
+
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bodyParser: true,
