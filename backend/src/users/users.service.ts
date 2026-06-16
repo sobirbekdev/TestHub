@@ -54,6 +54,8 @@ export class UsersService {
     return this.prisma.$transaction(async (tx) => {
       await tx.attempt.deleteMany({ where: { userId: id } });
       await tx.payment.deleteMany({ where: { userId: id } });
+      // otp_codes.phone → users.phone FK (ON DELETE RESTRICT) bor — avval o'chiramiz
+      await tx.otpCode.deleteMany({ where: { phone: user.phone } });
       // Bu odam biror guruhga kurator bo'lsa — kuratorlikni bo'shatamiz
       await tx.group.updateMany({ where: { curatorId: id }, data: { curatorId: null } });
       return tx.user.delete({ where: { id } });
