@@ -15,7 +15,7 @@ type Assignment = {
   groupId: number;
   startsAt: string | null;
   endsAt: string | null;
-  group: { id: number; name: string };
+  group: { id: number; name: string; telegramChatId?: string | null };
 };
 
 function extractOrderNo(filename: string): number | null {
@@ -311,6 +311,14 @@ export default function AdminGroupTestsPage() {
       if (data.ok) toast.success(`Reyting rasmi yuborildi (${data.count} kishi ishladi)`, { id: t });
       else toast.error(data.message || 'Yuborilmadi', { id: t });
     } catch (e: any) { toast.error(e.response?.data?.message || 'Xatolik', { id: t }); }
+  };
+
+  const saveGroupChat = async (gId: number, value: string) => {
+    try {
+      await api.patch(`/groups/${gId}/telegram`, { telegramChatId: value });
+      toast.success(value ? 'Telegram chat saqlandi' : 'Telegram chat o\'chirildi');
+      if (selected) loadAssignments(selected.id);
+    } catch { toast.error('Xatolik'); }
   };
 
   const closeGroup = async (gId: number) => {
@@ -694,6 +702,20 @@ export default function AdminGroupTestsPage() {
                               <button onClick={() => closeGroup(a.groupId)}
                                 style={{ padding: '6px 10px', backgroundColor: '#ef444420', color: '#ef4444', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12 }}>Yopish</button>
                             </div>
+                          </div>
+                          <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                            <span style={{ color: theme.text, opacity: 0.55, fontSize: 12, whiteSpace: 'nowrap' }}>📨 Guruh chat ID:</span>
+                            <input
+                              defaultValue={a.group.telegramChatId ?? ''}
+                              placeholder="masalan -1003386841898"
+                              onBlur={(e) => {
+                                const v = e.target.value.trim();
+                                if (v !== (a.group.telegramChatId ?? '')) saveGroupChat(a.groupId, v);
+                              }}
+                              style={{ flex: '1 1 200px', padding: '6px 10px', backgroundColor: theme.card, border: `1px solid ${a.group.telegramChatId ? '#10b981' : theme.border}`, color: theme.text, borderRadius: 8, fontSize: 12, outline: 'none' }} />
+                            {a.group.telegramChatId
+                              ? <span style={{ color: '#10b981', fontSize: 11 }}>✓ ulangan</span>
+                              : <span style={{ color: '#ef4444', fontSize: 11 }}>ulanmagan</span>}
                           </div>
                           {pending[a.groupId] && (
                             <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${theme.border}` }}>

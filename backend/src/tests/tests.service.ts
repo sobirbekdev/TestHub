@@ -285,7 +285,7 @@ export class TestsService {
     await this.ensureExists(testId);
     return this.prisma.testGroup.findMany({
       where: { testId },
-      include: { group: { select: { id: true, name: true } } },
+      include: { group: { select: { id: true, name: true, telegramChatId: true } } },
       orderBy: { openedAt: 'asc' },
     });
   }
