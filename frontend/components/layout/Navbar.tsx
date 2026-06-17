@@ -30,7 +30,7 @@ export default function Navbar() {
         borderBottom: `1px solid ${theme.border}`,
         position: 'sticky', top: 0, zIndex: 50,
         backdropFilter: 'blur(12px)',
-      }} className="hidden md:block">
+      }} className="nav-desktop">
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', height: 60, gap: 8 }}>
 
           {/* Logo */}
@@ -124,10 +124,10 @@ export default function Navbar() {
         backgroundColor: theme.card,
         borderTop: `1px solid ${theme.border}`,
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
-        display: 'flex', justifyContent: 'space-around',
+        justifyContent: 'space-around',
         padding: '8px 0 12px',
         backdropFilter: 'blur(12px)',
-      }} className="md:hidden">
+      }} className="nav-mobile">
         {NAV.map(({ href, icon, label }) => {
           const active = isActive(href);
           return (

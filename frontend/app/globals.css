@@ -12,6 +12,17 @@ body { font-family: 'Inter', sans-serif; transition: background 0.3s ease; }
 .animate-spin { animation: spin 1s linear infinite; }
 .animate-pulse-soft { animation: pulse 1.4s ease-in-out infinite; }
 
+/* ── Navigatsiya: kompyuterda yuqori, telefonda pastki (takrorlanmaslik uchun) ──
+   Inline display bilan ziddiyatga tushmasligi uchun display'ni faqat shu yerda boshqaramiz. */
+.nav-desktop { display: none; }
+.nav-desktop-flex { display: none; }
+.nav-mobile { display: flex; }
+@media (min-width: 768px) {
+  .nav-desktop { display: block; }
+  .nav-desktop-flex { display: flex; }
+  .nav-mobile { display: none; }
+}
+
 /* ── AI tekshiruv animatsiyalari ── */
 @keyframes aiGlowPulse { 0%, 100% { opacity: 0.35; transform: scale(1); } 50% { opacity: 0.85; transform: scale(1.06); } }
 @keyframes aiNodeBlink { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
