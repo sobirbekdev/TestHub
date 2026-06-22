@@ -334,10 +334,16 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       }),
     ]);
     if (!group) return { ok: false, message: 'Guruh topilmadi' };
-    // Avval guruh chatiga, bo'lmasa zaxira sifatida kurator shaxsiy chatiga
-    const target = group.telegramChatId || (group.curator?.telegramId ? String(group.curator.telegramId) : null);
+    // "Kuratorga" — ro'yxat FAQAT kuratorning shaxsiy chatiga boradi (guruhga emas),
+    // chunki ishlamaganlar ro'yxatini guruhda common ko'rsatish noqulay.
+    const target = group.curator?.telegramId ? String(group.curator.telegramId) : null;
     if (!target) {
-      return { ok: false, message: "Guruh Telegram chati ulanmagan (yoki kurator bog'lanmagan)" };
+      return {
+        ok: false,
+        message: group.curatorId
+          ? "Kurator Telegram'ga ulanmagan. Kurator botga /start bosib telefonini ulashi kerak."
+          : 'Bu guruhga kurator biriktirilmagan. Avval Guruhlar bo\'limidan kurator tanlang.',
+      };
     }
 
     const pending = await this.getNonCompleters(testId, groupId);

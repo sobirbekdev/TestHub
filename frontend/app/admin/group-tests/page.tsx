@@ -298,10 +298,10 @@ export default function AdminGroupTestsPage() {
 
   const notify = async (gId: number) => {
     if (!selected) return;
-    if (!confirm(`«${selected.title}» bo'yicha ishlamaganlar ro'yxati «${groupName(gId)}» guruhiga yuborilsinmi?`)) return;
+    if (!confirm(`«${selected.title}» bo'yicha ishlamaganlar ro'yxati «${groupName(gId)}» guruhi kuratoriga (shaxsiy) yuborilsinmi?`)) return;
     try {
       const { data } = await api.post('/telegram/notify-curator', { testId: selected.id, groupId: gId });
-      if (data.ok) toast.success(`«${selected.title}» → kuratorga yuborildi (${data.count} kishi)`);
+      if (data.ok) toast.success(`«${selected.title}» → kuratorga (shaxsiy) yuborildi (${data.count} kishi)`);
       else toast.error(data.message || 'Yuborilmadi');
     } catch (e: any) { toast.error(e.response?.data?.message || 'Xatolik'); }
   };
