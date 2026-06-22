@@ -294,21 +294,25 @@ export default function AdminGroupTestsPage() {
     } catch { toast.error('Xatolik'); }
   };
 
+  const groupName = (gId: number) => assignments.find((a) => a.groupId === gId)?.group.name || 'guruh';
+
   const notify = async (gId: number) => {
     if (!selected) return;
+    if (!confirm(`«${selected.title}» bo'yicha ishlamaganlar ro'yxati «${groupName(gId)}» guruhiga yuborilsinmi?`)) return;
     try {
       const { data } = await api.post('/telegram/notify-curator', { testId: selected.id, groupId: gId });
-      if (data.ok) toast.success(`Kuratorga yuborildi (${data.count} kishi)`);
+      if (data.ok) toast.success(`«${selected.title}» → kuratorga yuborildi (${data.count} kishi)`);
       else toast.error(data.message || 'Yuborilmadi');
     } catch (e: any) { toast.error(e.response?.data?.message || 'Xatolik'); }
   };
 
   const sendRanking = async (gId: number) => {
     if (!selected) return;
-    const t = toast.loading('Reyting yuborilmoqda...');
+    if (!confirm(`«${selected.title}» reytingi «${groupName(gId)}» guruhiga yuborilsinmi?`)) return;
+    const t = toast.loading(`«${selected.title}» reytingi yuborilmoqda...`);
     try {
       const { data } = await api.post('/telegram/send-ranking', { testId: selected.id, groupId: gId });
-      if (data.ok) toast.success(`Reyting rasmi yuborildi (${data.count} kishi ishladi)`, { id: t });
+      if (data.ok) toast.success(`«${selected.title}» reytingi yuborildi (${data.count} kishi ishladi)`, { id: t });
       else toast.error(data.message || 'Yuborilmadi', { id: t });
     } catch (e: any) { toast.error(e.response?.data?.message || 'Xatolik', { id: t }); }
   };
