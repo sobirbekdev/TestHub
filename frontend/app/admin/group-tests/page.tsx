@@ -40,7 +40,8 @@ export default function AdminGroupTestsPage() {
 
   // Yaratish formasi
   const [showCreate, setShowCreate] = useState(false);
-  const [nt, setNt] = useState({ examNo: '', topics: '', totalQ: '', duration: '', price: '' });
+  // examNo va narx — bo'sh; savollar soni (30) va davomiyligi (90) — standart turadi
+  const [nt, setNt] = useState({ examNo: '', topics: '', totalQ: '30', duration: '90', price: '' });
   const [creating, setCreating] = useState(false);
 
   // Savol muharriri
@@ -127,7 +128,7 @@ export default function AdminGroupTestsPage() {
       });
       toast.success('Mavzulashtirilgan test yaratildi!');
       setShowCreate(false);
-      setNt({ examNo: '', topics: '', totalQ: '', duration: '', price: '' });
+      setNt({ examNo: '', topics: '', totalQ: '30', duration: '90', price: '' });
       await loadTests();
       selectTest(r.data);
     } catch (e: any) {
