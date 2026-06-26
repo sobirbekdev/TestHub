@@ -40,7 +40,7 @@ export default function AdminGroupTestsPage() {
 
   // Yaratish formasi
   const [showCreate, setShowCreate] = useState(false);
-  const [nt, setNt] = useState({ examNo: 1, topics: '', totalQ: 30, duration: 90, price: 0 });
+  const [nt, setNt] = useState({ examNo: '', topics: '', totalQ: '', duration: '', price: '' });
   const [creating, setCreating] = useState(false);
 
   // Savol muharriri
@@ -107,21 +107,27 @@ export default function AdminGroupTestsPage() {
   };
 
   const createTopic = async () => {
+    const examNo = parseInt(nt.examNo, 10);
+    if (!examNo || examNo < 1) return toast.error('Nechinchi imtihon ekanini kiriting');
     if (!nt.topics.trim()) return toast.error('Mavzularni kiriting');
+    // Bo'sh qoldirilsa — mantiqiy standart qiymatlar ishlatiladi
+    const totalQ = parseInt(nt.totalQ, 10) || 30;
+    const duration = parseInt(nt.duration, 10) || 90;
+    const price = parseInt(nt.price, 10) || 0;
     setCreating(true);
     try {
       const r = await api.post('/tests', {
         type: 'TOPIC',
-        title: `${nt.examNo}-imtihon: ${nt.topics}`,
-        variantNo: nt.examNo,
+        title: `${examNo}-imtihon: ${nt.topics}`,
+        variantNo: examNo,
         topics: nt.topics,
-        totalQ: nt.totalQ,
-        duration: nt.duration,
-        price: nt.price,
+        totalQ,
+        duration,
+        price,
       });
       toast.success('Mavzulashtirilgan test yaratildi!');
       setShowCreate(false);
-      setNt({ examNo: nt.examNo + 1, topics: '', totalQ: 30, duration: 90, price: 0 });
+      setNt({ examNo: '', topics: '', totalQ: '', duration: '', price: '' });
       await loadTests();
       selectTest(r.data);
     } catch (e: any) {
@@ -383,13 +389,13 @@ export default function AdminGroupTestsPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
             <div>
               <label style={{ color: theme.text, opacity: 0.6, fontSize: 12, display: 'block', marginBottom: 4 }}>Nechinchi imtihon *</label>
-              <input type="number" min={1} value={nt.examNo}
-                onChange={(e) => setNt((p) => ({ ...p, examNo: +e.target.value }))} style={inp} />
+              <input type="number" min={1} value={nt.examNo} placeholder="Masalan: 14"
+                onChange={(e) => setNt((p) => ({ ...p, examNo: e.target.value }))} style={inp} />
             </div>
             <div>
               <label style={{ color: theme.text, opacity: 0.6, fontSize: 12, display: 'block', marginBottom: 4 }}>Savollar soni</label>
-              <input type="number" min={1} max={100} value={nt.totalQ}
-                onChange={(e) => setNt((p) => ({ ...p, totalQ: +e.target.value }))} style={inp} />
+              <input type="number" min={1} max={100} value={nt.totalQ} placeholder="30"
+                onChange={(e) => setNt((p) => ({ ...p, totalQ: e.target.value }))} style={inp} />
             </div>
             <div style={{ gridColumn: '1 / -1' }}>
               <label style={{ color: theme.text, opacity: 0.6, fontSize: 12, display: 'block', marginBottom: 4 }}>Qaysi mavzularni qamrab oladi *</label>
@@ -398,13 +404,13 @@ export default function AdminGroupTestsPage() {
             </div>
             <div>
               <label style={{ color: theme.text, opacity: 0.6, fontSize: 12, display: 'block', marginBottom: 4 }}>Davomiyligi (min)</label>
-              <input type="number" min={1} max={300} value={nt.duration}
-                onChange={(e) => setNt((p) => ({ ...p, duration: +e.target.value }))} style={inp} />
+              <input type="number" min={1} max={300} value={nt.duration} placeholder="90"
+                onChange={(e) => setNt((p) => ({ ...p, duration: e.target.value }))} style={inp} />
             </div>
             <div>
               <label style={{ color: theme.text, opacity: 0.6, fontSize: 12, display: 'block', marginBottom: 4 }}>Narx (so'm)</label>
-              <input type="number" min={0} value={nt.price}
-                onChange={(e) => setNt((p) => ({ ...p, price: +e.target.value }))} style={inp} />
+              <input type="number" min={0} value={nt.price} placeholder="0 (tekin)"
+                onChange={(e) => setNt((p) => ({ ...p, price: e.target.value }))} style={inp} />
             </div>
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
